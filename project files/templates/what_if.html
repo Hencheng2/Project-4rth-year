@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>What-If Analysis - SalesForecast AI</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body {
+    background: #F5F7FA;
+    overflow-x: hidden;
+  }
+
+  /* Sidebar (identical to forecast & anomalies pages) */
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 260px;
+    height: 100vh;
+    background: white;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+  }
+  .sidebar-header { padding: 24px 20px 16px 24px; border-bottom: 1px solid #EDF2F7; }
+  .logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .logo-sub { font-size: 11px; color: #94A3B8; margin-top: 4px; letter-spacing: 0.3px; }
+  .nav-links { flex: 1; padding: 16px 0; overflow-y: auto; }
+  .nav-item { display: flex; align-items: center; padding: 10px 24px; color: #64748B; text-decoration: none; font-size: 14px; font-weight: 500; transition: 0.2s; gap: 12px; }
+  .nav-item i { width: 20px; font-size: 1.1rem; }
+  .nav-item.active { background: linear-gradient(90deg, rgba(102,126,234,0.08), rgba(118,75,162,0.05)); color: #667EEA; border-right: 3px solid #667EEA; font-weight: 600; }
+  .nav-item:hover:not(.active) { background: #F8FAFE; color: #1E293B; }
+  .sidebar-footer { padding: 20px 20px 24px 20px; border-top: 1px solid #EDF2F7; }
+  .user-badge { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .user-avatar { width: 42px; height: 42px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 40px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; }
+  .user-name { font-size: 14px; font-weight: 700; color: #0F172A; }
+  .role-badge { background: #EFF6FF; color: #2563EB; padding: 4px 10px; border-radius: 30px; font-size: 10px; font-weight: 700; display: inline-block; margin-top: 4px; }
+  .logout-link { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 40px; padding: 10px; font-size: 13px; font-weight: 600; text-decoration: none; transition: 0.2s; }
+  .logout-link:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(102,126,234,0.25); }
+
+  /* Main content */
+  .main-content {
+    margin-left: 260px;
+    padding: 0 28px 20px 28px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .top-bar {
+    background: white;
+    border-radius: 20px;
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.05);
+    margin-top: 16px;
+  }
+  .top-bar h2 { font-size: 1.25rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 10px; }
+  .top-bar h2 i { color: #667EEA; }
+  .action-buttons { display: flex; gap: 10px; }
+
+  /* Params bar (horizontal) - like forecast page */
+  .params-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .params-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F172A;
+    white-space: nowrap;
+    align-self: center;
+    min-width: 130px;
+  }
+  .params-divider {
+    width: 1px;
+    height: 48px;
+    background: #EDF2F7;
+    align-self: center;
+  }
+  .param-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+  }
+  .param-field label {
+    font-weight: 600;
+    font-size: 11px;
+    color: #1E293B;
+  }
+  .param-field-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 160px;
+  }
+  .param-field-slider label {
+    font-weight: 600;
+    font-size: 11px;
+    color: #1E293B;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .slider-row input[type=range] {
+    flex: 1;
+  }
+  .slider-val {
+    font-size: 12px;
+    font-weight: 700;
+    color: #667EEA;
+    min-width: 45px;
+  }
+  .form-control {
+    width: 100%;
+    background: white;
+    border: 2px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    transition: 0.2s;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: #667EEA;
+  }
+  .btn-generate {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 40px;
+    padding: 10px 22px;
+    font-weight: 700;
+    color: white;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    align-self: center;
+    margin-left: auto;
+  }
+  .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 10px 18px rgba(102,126,234,0.3); }
+  .btn-outline-sm {
+    background: transparent;
+    border: 2px solid #E2E8F0;
+    border-radius: 30px;
+    padding: 5px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .btn-outline-sm:hover { border-color: #667EEA; color: #667EEA; background: #f8fafc; }
+  .btn-icon {
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 30px;
+    transition: 0.2s;
+    color: #64748B;
+  }
+  .btn-icon:hover { background: #F1F5F9; color: #667EEA; }
+
+  /* Results area */
+  .results-area {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .chart-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-mini {
+    background: #F8FAFE;
+    border-radius: 16px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-mini .value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #667EEA;
+    line-height: 1.2;
+  }
+  .stat-mini .label {
+    font-size: 11px;
+    color: #5C6F8C;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .insight-box {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border-left: 5px solid #667EEA;
+  }
+  .saved-scenarios {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .saved-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #EDF2F7;
+  }
+  .saved-item:last-child { border-bottom: none; }
+  .saved-name { font-weight: 600; font-size: 13px; }
+  .saved-meta { font-size: 11px; color: #7E8BA0; margin-top: 2px; }
+  .badge-change {
+    background: #EFF6FF;
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-positive { background: #E0F2E9; color: #0B5E42; }
+  .badge-negative { background: #FFECEC; color: #B91C1C; }
+  .loader { text-align: center; padding: 30px; }
+  .spinner { width: 36px; height: 36px; border: 4px solid #E2E8F0; border-top-color: #667EEA; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .msg { border-radius: 30px; padding: 10px 18px; margin-bottom: 10px; display: none; font-size: 13px; font-weight: 500; }
+  .msg-success { background: #E0F2E9; color: #0B5E42; border-left: 4px solid #10B981; }
+  .msg-error { background: #FFECEC; color: #B91C1C; border-left: 4px solid #EF4444; }
+  .empty-state { text-align: center; padding: 40px; color: #9AA9C1; background: white; border-radius: 20px; }
+  .admin-only { display: none; }
+
+  @media (max-width: 1000px) {
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; }
+    .params-card { flex-direction: column; align-items: stretch; }
+    .params-divider { display: none; }
+    .btn-generate { margin-left: 0; width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">SalesForecast AI</div>
+    <div class="logo-sub">LSTM · Deep Learning</div>
+  </div>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
+    <a href="/data-management" class="nav-item"><i class="fas fa-database"></i>Data Management</a>
+    <a href="/forecast" class="nav-item"><i class="fas fa-bullseye"></i>Generate Forecast</a>
+    <a href="/trends-analysis" class="nav-item"><i class="fas fa-chart-line"></i>Trends Analysis</a>
+    <a href="/reports" class="nav-item"><i class="fas fa-file-alt"></i>Reports</a>
+    <a href="/anomalies" class="nav-item"><i class="fas fa-exclamation-triangle"></i>Anomalies</a>
+    <a href="/what-if" class="nav-item active"><i class="fas fa-sliders-h"></i>What-If Analysis</a>
+    <a href="/model-training" class="nav-item admin-only"><i class="fas fa-brain"></i>Model Training</a>
+    <a href="/admin/users" class="nav-item admin-only"><i class="fas fa-users-cog"></i>User Management</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="user-avatar" id="navAvatar">U</div>
+      <div><div class="user-name" id="navUserName">User</div><span class="role-badge" id="navRole">user</span></div>
+    </div>
+    <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="top-bar">
+    <h2><i class="fas fa-sliders-h"></i> What-If Analysis</h2>
+    <div class="action-buttons">
+      <button class="btn-icon" id="exportBtn" onclick="exportScenario()" disabled><i class="fas fa-download"></i> Export</button>
+      <button class="btn-icon" id="saveBtn" onclick="saveScenario()" disabled><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+
+  <div id="msgSuccess" class="msg msg-success"></div>
+  <div id="msgError" class="msg msg-error"></div>
+
+  <!-- Horizontal Parameters bar (identical style to forecast) -->
+  <div class="params-card">
+    <div class="params-title"><i class="fas fa-sliders-h" style="color:#667EEA;margin-right:6px;"></i>Scenario Parameters</div>
+    <div class="params-divider"></div>
+
+    <div class="param-field">
+      <label>Product Category</label>
+      <select id="wiCategory" class="form-control">
+        <option value="">-- Select --</option>
+      </select>
+    </div>
+    <div class="param-field">
+      <label>Region</label>
+      <select id="wiRegion" class="form-control">
+        <option value="">-- Select --</option>
+      </select>
+    </div>
+    <div class="param-field-slider">
+      <label>Forecast Period: <strong id="daysValue">30</strong> days</label>
+      <div class="slider-row">
+        <input type="range" id="forecastDays" min="7" max="90" value="30" oninput="document.getElementById('daysValue').innerText=this.value">
+      </div>
+    </div>
+    <div class="params-divider"></div>
+
+    <div class="param-field-slider">
+      <label>Price Change</label>
+      <div class="slider-row">
+        <input type="range" id="priceAdj" min="-50" max="50" value="0" oninput="updateSliderLabel('priceAdj','priceVal','%')">
+        <span class="slider-val" id="priceVal">0%</span>
+      </div>
+    </div>
+    <div class="param-field-slider">
+      <label>Promotion Impact</label>
+      <div class="slider-row">
+        <input type="range" id="promoAdj" min="-30" max="100" value="0" oninput="updateSliderLabel('promoAdj','promoVal','%')">
+        <span class="slider-val" id="promoVal">0%</span>
+      </div>
+    </div>
+    <div class="param-field-slider">
+      <label>Seasonal Factor</label>
+      <div class="slider-row">
+        <input type="range" id="seasonalAdj" min="50" max="200" value="100" step="5" oninput="updateSliderLabel('seasonalAdj','seasonalVal','%')">
+        <span class="slider-val" id="seasonalVal">100%</span>
+      </div>
+    </div>
+    <div class="param-field-slider">
+      <label>Stock Availability</label>
+      <div class="slider-row">
+        <input type="range" id="stockAdj" min="10" max="100" value="100" oninput="updateSliderLabel('stockAdj','stockVal','%')">
+        <span class="slider-val" id="stockVal">100%</span>
+      </div>
+    </div>
+
+    <button class="btn-generate" onclick="runScenario()"><i class="fas fa-play"></i> Run Scenario</button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="loader" style="display: none;">
+    <div class="spinner"></div>
+    <p>Generating baseline forecast & applying scenario...</p>
+  </div>
+
+  <!-- Results Area -->
+  <div id="resultsArea" style="display: none;">
+    <div class="chart-card">
+      <h3 style="font-size:15px; font-weight:700; margin-bottom:12px;"><i class="fas fa-chart-line" style="color:#667EEA; margin-right:8px;"></i> Scenario Comparison</h3>
+      <div class="stats-row" id="statsRow"></div>
+      <div id="comparisonChart" style="height: 280px;"></div>
+    </div>
+
+    <div class="insight-box" id="insightBox">
+      <h4><i class="fas fa-lightbulb" style="color:#f59e0b; margin-right:8px;"></i> Business Impact</h4>
+      <div id="insightText" style="font-size:13px; line-height:1.6; color:#334155; margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div id="emptyState" class="empty-state" style="display: block;">
+    <i class="fas fa-sliders-h" style="font-size:48px; opacity:0.3; margin-bottom:16px;"></i>
+    <p>Select a category & region, adjust the sliders, then click "Run Scenario" to see how changes affect your forecast.</p>
+  </div>
+
+  <!-- Saved Scenarios -->
+  <div class="saved-scenarios">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h3 style="font-size: 15px; font-weight: 700;"><i class="fas fa-history" style="color:#667EEA; margin-right:8px;"></i> Saved Scenarios</h3>
+      <button class="btn-outline-sm" onclick="loadSavedScenarios()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+    <div id="savedList">
+      <p style="color:#9AA9C1; font-size:13px;">No saved scenarios yet. Run and save a scenario to see it here.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentBaseForecast = null;
+  let currentScenarioResult = null;
+  let userRole = "user";
+  let username = "Guest";
+  let currencySymbol = "$";
+  let currencyRate = 1.0;
+
+  async function loadUserInfo() {
+    try {
+      const res = await fetch("/api/user-info");
+      const data = await res.json();
+      username = data.username || "Analyst";
+      userRole = data.role || "user";
+      document.getElementById("navUserName").innerText = username;
+      document.getElementById("navAvatar").innerText = username.charAt(0).toUpperCase();
+      const roleSpan = document.getElementById("navRole");
+      roleSpan.innerText = userRole;
+      if (userRole === "admin") {
+        document.querySelectorAll(".admin-only").forEach(el => el.style.display = "flex");
+      }
+    } catch(e) { console.warn(e); }
+  }
+
+  async function loadDropdowns() {
+    try {
+      const res = await fetch("/api/categories-regions");
+      const data = await res.json();
+      const catSelect = document.getElementById("wiCategory");
+      const regSelect = document.getElementById("wiRegion");
+      (data.categories || []).forEach(c => {
+        let opt = document.createElement("option"); opt.value = c; opt.innerText = c; catSelect.appendChild(opt);
+      });
+      (data.regions || []).forEach(r => {
+        let opt = document.createElement("option"); opt.value = r; opt.innerText = r; regSelect.appendChild(opt);
+      });
+    } catch(e) { console.error(e); }
+  }
+
+  async function loadCurrency() {
+    try {
+      const res = await fetch("/api/currency-settings");
+      const data = await res.json();
+      if (data.success) {
+        currencySymbol = data.symbol;
+        currencyRate = data.rate;
+      }
+    } catch(e) {}
+  }
+
+  function formatMoney(value) {
+    let num = Number(value || 0) * currencyRate;
+    return currencySymbol + num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function updateSliderLabel(sliderId, spanId, suffix) {
+    let val = document.getElementById(sliderId).value;
+    document.getElementById(spanId).innerText = val + suffix;
+  }
+
+  async function runScenario() {
+    const category = document.getElementById("wiCategory").value;
+    const region = document.getElementById("wiRegion").value;
+    const days = parseInt(document.getElementById("forecastDays").value);
+
+    if (!category || !region) {
+      showMsg("error", "Please select both category and region.");
+      return;
+    }
+
+    document.getElementById("loading").style.display = "block";
+    document.getElementById("resultsArea").style.display = "none";
+    document.getElementById("emptyState").style.display = "none";
+
+    try {
+      // Generate baseline forecast using fast Exponential Smoothing (quick for what-if)
+      const body = {
+        category, region, days,
+        model_type: "exponential_smoothing",
+        force_use_available: true
+      };
+      const resp = await fetch("/api/generate-forecast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const result = await resp.json();
+      document.getElementById("loading").style.display = "none";
+
+      if (!result.success) {
+        showMsg("error", result.message || "Could not generate base forecast.");
+        document.getElementById("emptyState").style.display = "block";
+        return;
+      }
+
+      const base = result.data;
+      if (!base.predictions || base.predictions.length === 0) {
+        showMsg("error", "No forecast data returned.");
+        document.getElementById("emptyState").style.display = "block";
+        return;
+      }
+
+      // Apply multipliers
+      const priceAdj = parseFloat(document.getElementById("priceAdj").value) / 100;
+      const promoAdj = parseFloat(document.getElementById("promoAdj").value) / 100;
+      const seasonal = parseFloat(document.getElementById("seasonalAdj").value) / 100;
+      const stock = parseFloat(document.getElementById("stockAdj").value) / 100;
+
+      const factor = (1 + priceAdj) * (1 + promoAdj) * seasonal * stock;
+      const scenarioValues = base.predictions.map(p => Math.max(0, p * factor));
+
+      currentBaseForecast = { dates: base.dates, values: base.predictions };
+      currentScenarioResult = { dates: base.dates, base: base.predictions, scenario: scenarioValues };
+
+      renderResults(category, region, factor);
+      document.getElementById("resultsArea").style.display = "block";
+      document.getElementById("exportBtn").disabled = false;
+      document.getElementById("saveBtn").disabled = false;
+    } catch (err) {
+      document.getElementById("loading").style.display = "none";
+      showMsg("error", "Server error: " + err.message);
+      document.getElementById("emptyState").style.display = "block";
+    }
+  }
+
+  function renderResults(category, region, factor) {
+    const baseTotal = currentScenarioResult.base.reduce((a,b)=>a+b,0);
+    const scenTotal = currentScenarioResult.scenario.reduce((a,b)=>a+b,0);
+    const changePercent = baseTotal > 0 ? ((scenTotal - baseTotal)/baseTotal)*100 : 0;
+    const baseAvg = baseTotal / currentScenarioResult.base.length;
+    const scenAvg = scenTotal / currentScenarioResult.scenario.length;
+
+    document.getElementById("statsRow").innerHTML = `
+      <div class="stat-mini"><div class="value">${formatMoney(baseTotal)}</div><div class="label">Base Forecast</div></div>
+      <div class="stat-mini"><div class="value">${formatMoney(scenTotal)}</div><div class="label">Scenario Forecast</div></div>
+      <div class="stat-mini"><div class="value ${changePercent>=0?'positive':'negative'}" style="color:${changePercent>=0?'#10B981':'#EF4444'}">${changePercent>=0?'+':''}${changePercent.toFixed(1)}%</div><div class="label">Total Change</div></div>
+      <div class="stat-mini"><div class="value">${formatMoney(scenAvg)}</div><div class="label">Scenario Daily Avg</div></div>
+    `;
+
+    const traceBase = {
+      x: currentScenarioResult.dates,
+      y: currentScenarioResult.base,
+      type: "scatter",
+      mode: "lines",
+      name: "Base Forecast (Exponential Smoothing)",
+      line: { color: "#94A3B8", width: 2, dash: "dash" }
+    };
+    const traceScenario = {
+      x: currentScenarioResult.dates,
+      y: currentScenarioResult.scenario,
+      type: "scatter",
+      mode: "lines+markers",
+      name: "Adjusted Scenario",
+      line: { color: "#667EEA", width: 3 },
+      marker: { size: 4, color: "#667EEA" },
+      fill: "tozeroy",
+      fillcolor: "rgba(102,126,234,0.08)"
+    };
+    Plotly.newPlot("comparisonChart", [traceBase, traceScenario], {
+      height: 280,
+      margin: { l: 55, r: 20, t: 20, b: 50 },
+      yaxis: { tickprefix: currencySymbol, gridcolor: "#F0F2F6" },
+      xaxis: { gridcolor: "#F0F2F6" },
+      plot_bgcolor: "white",
+      paper_bgcolor: "white",
+      legend: { orientation: "h", yanchor: "bottom", y: -0.2 }
+    }, { responsive: true });
+
+    const price = parseInt(document.getElementById("priceAdj").value);
+    const promo = parseInt(document.getElementById("promoAdj").value);
+    const seasonalVal = parseInt(document.getElementById("seasonalAdj").value);
+    let insight = `With a <strong>${price}%</strong> price change, <strong>${promo}%</strong> promotion impact, and <strong>${seasonalVal}%</strong> seasonal factor, `;
+    if (changePercent > 0) {
+      insight += `your scenario projects a <strong style="color:#10B981">+${changePercent.toFixed(1)}% revenue increase</strong> (${formatMoney(scenTotal)} total). Consider increasing inventory and staffing for this uplift.`;
+    } else if (changePercent < 0) {
+      insight += `your scenario projects a <strong style="color:#EF4444">${changePercent.toFixed(1)}% revenue decrease</strong>. Review pricing strategy or promotional spend.`;
+    } else {
+      insight += `the scenario shows no significant change from baseline. Adjust parameters for different outcomes.`;
+    }
+    document.getElementById("insightText").innerHTML = insight;
+  }
+
+  function saveScenario() {
+    if (!currentScenarioResult) return;
+    const name = prompt("Enter a name for this scenario:");
+    if (!name) return;
+
+    const scenario = {
+      name: name,
+      params: {
+        price: document.getElementById("priceAdj").value,
+        promo: document.getElementById("promoAdj").value,
+        seasonal: document.getElementById("seasonalAdj").value,
+        stock: document.getElementById("stockAdj").value,
+        days: document.getElementById("forecastDays").value
+      },
+      category: document.getElementById("wiCategory").value,
+      region: document.getElementById("wiRegion").value,
+      baseTotal: currentScenarioResult.base.reduce((a,b)=>a+b,0),
+      scenTotal: currentScenarioResult.scenario.reduce((a,b)=>a+b,0),
+      date: new Date().toLocaleString()
+    };
+    let saved = localStorage.getItem("wi_scenarios");
+    let scenarios = saved ? JSON.parse(saved) : [];
+    scenarios.unshift(scenario);
+    localStorage.setItem("wi_scenarios", JSON.stringify(scenarios));
+    showMsg("success", `Scenario "${name}" saved!`);
+    loadSavedScenarios();
+  }
+
+  function loadSavedScenarios() {
+    let saved = localStorage.getItem("wi_scenarios");
+    let scenarios = saved ? JSON.parse(saved) : [];
+    const container = document.getElementById("savedList");
+    if (!scenarios.length) {
+      container.innerHTML = '<p style="color:#9AA9C1; font-size:13px;">No saved scenarios yet. Run and save a scenario to see it here.</p>';
+      return;
+    }
+    let html = "";
+    scenarios.forEach((s, idx) => {
+      const change = s.baseTotal > 0 ? ((s.scenTotal - s.baseTotal)/s.baseTotal)*100 : 0;
+      const changeClass = change >= 0 ? "badge-positive" : "badge-negative";
+      const changeSign = change >= 0 ? "+" : "";
+      html += `
+        <div class="saved-item">
+          <div>
+            <div class="saved-name">${escapeHtml(s.name)}</div>
+            <div class="saved-meta">${s.category} | ${s.region} · ${s.date}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="badge-change ${changeClass}">${changeSign}${change.toFixed(1)}%</span>
+            <button class="btn-icon" onclick="loadSavedScenario(${idx})" style="font-size:12px;"><i class="fas fa-chart-line"></i></button>
+            <button class="btn-icon" onclick="deleteSavedScenario(${idx})" style="color:#EF4444;"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  function loadSavedScenario(index) {
+    let saved = localStorage.getItem("wi_scenarios");
+    let scenarios = saved ? JSON.parse(saved) : [];
+    const s = scenarios[index];
+    if (!s) return;
+    document.getElementById("wiCategory").value = s.category;
+    document.getElementById("wiRegion").value = s.region;
+    document.getElementById("forecastDays").value = s.params.days;
+    document.getElementById("daysValue").innerText = s.params.days;
+    document.getElementById("priceAdj").value = s.params.price;
+    document.getElementById("promoAdj").value = s.params.promo;
+    document.getElementById("seasonalAdj").value = s.params.seasonal;
+    document.getElementById("stockAdj").value = s.params.stock;
+    updateSliderLabel("priceAdj","priceVal","%");
+    updateSliderLabel("promoAdj","promoVal","%");
+    updateSliderLabel("seasonalAdj","seasonalVal","%");
+    updateSliderLabel("stockAdj","stockVal","%");
+    showMsg("success", `Loaded scenario "${s.name}". Click "Run Scenario" to recalc.`);
+  }
+
+  function deleteSavedScenario(index) {
+    let saved = localStorage.getItem("wi_scenarios");
+    let scenarios = saved ? JSON.parse(saved) : [];
+    if (confirm(`Delete "${scenarios[index].name}"?`)) {
+      scenarios.splice(index, 1);
+      localStorage.setItem("wi_scenarios", JSON.stringify(scenarios));
+      loadSavedScenarios();
+      showMsg("success", "Scenario deleted.");
+    }
+  }
+
+  function exportScenario() {
+    if (!currentScenarioResult) return;
+    let csv = "Date,Base Forecast,Scenario Forecast,Difference\n";
+    for (let i=0; i<currentScenarioResult.dates.length; i++) {
+      let diff = currentScenarioResult.scenario[i] - currentScenarioResult.base[i];
+      csv += `${currentScenarioResult.dates[i]},${currentScenarioResult.base[i].toFixed(2)},${currentScenarioResult.scenario[i].toFixed(2)},${diff.toFixed(2)}\n`;
+    }
+    const blob = new Blob([csv], {type: "text/csv"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `scenario_${new Date().toISOString().slice(0,19)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function showMsg(type, msg) {
+    const el = document.getElementById(`msg${type === "success" ? "Success" : "Error"}`);
+    if (el) { el.innerText = msg; el.style.display = "block"; setTimeout(()=> el.style.display="none", 5000); }
+  }
+
+  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    await loadUserInfo();
+    await loadDropdowns();
+    await loadCurrency();
+    loadSavedScenarios();
+    // reset buttons state
+    document.getElementById("exportBtn").disabled = true;
+    document.getElementById("saveBtn").disabled = true;
+  });
+</script>
+</body>
+</html>

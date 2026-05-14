@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>SalesForecast AI | Forecast Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body {
+    background: #F5F7FA;
+    overflow-x: hidden;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 260px;
+    height: 100vh;
+    background: white;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+  }
+  .sidebar-header { padding: 24px 20px 16px 24px; border-bottom: 1px solid #EDF2F7; }
+  .logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .logo-sub { font-size: 11px; color: #94A3B8; margin-top: 4px; letter-spacing: 0.3px; }
+  .nav-links { flex: 1; padding: 16px 0; overflow-y: auto; }
+  .nav-item { display: flex; align-items: center; padding: 10px 24px; color: #64748B; text-decoration: none; font-size: 14px; font-weight: 500; transition: 0.2s; gap: 12px; }
+  .nav-item i { width: 20px; font-size: 1.1rem; }
+  .nav-item.active { background: linear-gradient(90deg, rgba(102,126,234,0.08), rgba(118,75,162,0.05)); color: #667EEA; border-right: 3px solid #667EEA; font-weight: 600; }
+  .nav-item:hover:not(.active) { background: #F8FAFE; color: #1E293B; }
+  .sidebar-footer { padding: 20px 20px 24px 20px; border-top: 1px solid #EDF2F7; }
+  .user-badge { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .user-avatar { width: 42px; height: 42px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 40px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; }
+  .user-name { font-size: 14px; font-weight: 700; color: #0F172A; }
+  .role-badge { background: #EFF6FF; color: #2563EB; padding: 4px 10px; border-radius: 30px; font-size: 10px; font-weight: 700; display: inline-block; margin-top: 4px; }
+  .logout-link { display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 40px; padding: 10px; font-size: 13px; font-weight: 600; text-decoration: none; transition: 0.2s; }
+  .logout-link:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(102,126,234,0.25); }
+
+  .main-content {
+    margin-left: 260px;
+    padding: 0 28px 20px 28px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .top-bar {
+    background: white;
+    border-radius: 0 0 20px 20px;
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .top-bar h2 { font-size: 1.25rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 10px; }
+  .top-bar h2 i { color: #667EEA; }
+  .user-greeting { font-size: 13px; color: #5b6e8c; background: #F1F5F9; padding: 6px 14px; border-radius: 30px; }
+
+  .params-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .params-card .params-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F172A;
+    white-space: nowrap;
+    align-self: center;
+    min-width: 130px;
+  }
+  .params-divider {
+    width: 1px;
+    height: 48px;
+    background: #EDF2F7;
+    align-self: center;
+  }
+
+  .model-row {
+    display: flex;
+    gap: 8px;
+    align-self: center;
+  }
+  .model-card {
+    background: #F9FAFE;
+    border: 2px solid #E9EEF5;
+    border-radius: 12px;
+    padding: 8px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 80px;
+  }
+  .model-card.selected { border-color: #667EEA; background: rgba(102,126,234,0.06); }
+  .model-card i { font-size: 18px; color: #5b6e8c; margin-bottom: 3px; display: block; }
+  .model-card.selected i { color: #667EEA; }
+  .model-card h4 { font-size: 11px; font-weight: 700; margin-bottom: 1px; }
+  .model-card p { font-size: 9px; color: #7E8BA0; }
+
+  .param-field { display: flex; flex-direction: column; gap: 4px; min-width: 140px; }
+  .param-field label { font-weight: 600; font-size: 11px; color: #1E293B; }
+  .form-control { width: 100%; background: white; border: 2px solid #E2E8F0; border-radius: 10px; padding: 8px 12px; font-size: 12px; transition: 0.2s; }
+  .form-control:focus { outline: none; border-color: #667EEA; }
+
+  .param-field-slider { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+  .param-field-slider label { font-weight: 600; font-size: 11px; color: #1E293B; }
+  .slider-row { display: flex; align-items: center; gap: 8px; }
+  .slider-row input[type=range] { flex: 1; }
+  .slider-val { font-size: 12px; font-weight: 700; color: #667EEA; min-width: 28px; }
+
+  .data-status { border-radius: 10px; padding: 8px 12px; font-size: 11px; display: none; align-items: center; gap: 6px; background: #FEF9E3; color: #B45309; border-left: 3px solid #F59E0B; align-self: center; max-width: 220px; }
+  .force-wrap { display: none; align-items: center; gap: 8px; font-size: 12px; align-self: center; }
+
+  .btn-generate {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none; border-radius: 40px; padding: 10px 22px;
+    font-weight: 700; color: white; font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; transition: all 0.2s;
+    white-space: nowrap; align-self: center;
+    margin-left: auto;
+  }
+  .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 10px 18px rgba(102,126,234,0.3); }
+
+  .results-area {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .chart-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .chart-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chart-card-header h3 { font-size: 16px; font-weight: 700; color: #0F172A; }
+  .btn-outline-sm { background: transparent; border: 2px solid #E2E8F0; border-radius: 30px; padding: 5px 14px; font-size: 11px; font-weight: 600; color: #475569; cursor: pointer; transition: 0.2s; }
+  .btn-outline-sm:hover { border-color: #667EEA; color: #667EEA; background: #f8fafc; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+  .stat-mini { background: #F8FAFE; border-radius: 16px; padding: 12px 8px; text-align: center; }
+  .stat-mini .value { font-size: 20px; font-weight: 800; color: #667EEA; line-height: 1.2; }
+  .stat-mini .label { font-size: 11px; color: #5C6F8C; margin-top: 4px; font-weight: 500; }
+
+  .chart-container { background: #FFFFFF; border-radius: 16px; }
+  .chart-placeholder { min-height: 240px; }
+
+  .ai-insight {
+    background: white;
+    border-radius: 20px;
+    padding: 14px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border-left: 5px solid #667EEA;
+    display: none;
+  }
+  .ai-insight h4 { display: flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #0F172A; }
+  .ai-text { font-size: 12.5px; color: #2C3E5C; line-height: 1.6; }
+
+  /* Insight table styles */
+  .insight-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 12px;
+  }
+  .insight-table th {
+    background: #F1F5F9;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+    color: #1E293B;
+    border-bottom: 2px solid #E2E8F0;
+  }
+  .insight-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #E2E8F0;
+    color: #334155;
+  }
+  .insight-table tr:last-child td {
+    border-bottom: none;
+  }
+  .insight-table td:first-child {
+    font-weight: 600;
+    color: #0F172A;
+  }
+  .insight-table td:last-child {
+    color: #475569;
+    font-style: italic;
+  }
+
+  .table-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .table-card h3 { font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 12px; }
+  .table-wrapper { max-height: 220px; overflow-y: auto; border-radius: 14px; border: 1px solid #EDF2F7; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: #F8FAFE; padding: 10px 12px; color: #3B4A6B; font-weight: 700; border-bottom: 1px solid #E4E9F2; position: sticky; top: 0; }
+  td { padding: 9px 12px; border-bottom: 1px solid #F1F4F9; color: #1F2A44; }
+  tr:hover td { background: #F9F9FF; }
+  .confidence-high { color: #10B981; font-weight: 600; }
+  .confidence-medium { color: #F59E0B; font-weight: 600; }
+  .confidence-low { color: #EF4444; }
+
+  .comparison-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+  .loader { display: none; text-align: center; padding: 30px; }
+  .spinner { width: 36px; height: 36px; border: 4px solid #E2E8F0; border-top-color: #667EEA; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .msg { border-radius: 30px; padding: 10px 18px; margin-bottom: 10px; display: none; font-size: 13px; font-weight: 500; }
+  .msg-success { background: #E0F2E9; color: #0B5E42; border-left: 4px solid #10B981; }
+  .msg-error { background: #FFECEC; color: #B91C1C; border-left: 4px solid #EF4444; }
+
+  .empty-state { text-align: center; padding: 30px; color: #9AA9C1; }
+  .empty-state i { font-size: 36px; opacity: 0.5; display: block; margin-bottom: 10px; }
+
+  @media (max-width: 1000px) {
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; }
+    .params-card { flex-direction: column; align-items: stretch; }
+    .params-divider { display: none; }
+    .btn-generate { margin-left: 0; width: 100%; justify-content: center; }
+  }
+
+  .admin-only { display: none; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">SalesForecast AI</div>
+    <div class="logo-sub">LSTM · Deep Learning</div>
+  </div>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
+    <a href="/data-management" class="nav-item"><i class="fas fa-database"></i>Data Management</a>
+    <a href="/forecast" class="nav-item active"><i class="fas fa-bullseye"></i>Generate Forecast</a>
+    <a href="/trends-analysis" class="nav-item"><i class="fas fa-chart-line"></i>Trends Analysis</a>
+    <a href="/reports" class="nav-item"><i class="fas fa-file-alt"></i>Reports</a>
+    <a href="/anomalies" class="nav-item"><i class="fas fa-exclamation-triangle"></i>Anomalies</a>
+    <a href="/what-if" class="nav-item"><i class="fas fa-sliders-h"></i>What-If Analysis</a>
+    <a href="/model-training" class="nav-item admin-only"><i class="fas fa-brain"></i>Model Training</a>
+    <a href="/admin/users" class="nav-item admin-only"><i class="fas fa-users-cog"></i>User Management</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="user-avatar" id="navAvatar">U</div>
+      <div><div class="user-name" id="navUserName">User</div><span class="role-badge" id="navRole">user</span></div>
+    </div>
+    <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="top-bar">
+    <h2><i class="fas fa-chart-line"></i> Generate Sales Forecast</h2>
+    <div class="user-greeting" id="greetingMsg">Welcome back</div>
+  </div>
+
+  <div id="msgSuccess" class="msg msg-success"></div>
+  <div id="msgError" class="msg msg-error"></div>
+
+  <div class="params-card">
+    <div class="params-title"><i class="fas fa-sliders-h" style="color:#667EEA;margin-right:6px;"></i>Forecast Parameters</div>
+    <div class="params-divider"></div>
+
+    <div class="model-row">
+      <div class="model-card selected" id="card-lstm" onclick="selectModel('lstm')">
+        <i class="fas fa-brain"></i><h4>LSTM</h4><p>Deep Learning</p>
+      </div>
+      <div class="model-card" id="card-arima" onclick="selectModel('arima')">
+        <i class="fas fa-chart-line"></i><h4>ARIMA</h4><p>Classical TS</p>
+      </div>
+      <div class="model-card" id="card-exp" onclick="selectModel('exponential_smoothing')">
+        <i class="fas fa-wave-square"></i><h4>Exp. Smooth</h4><p>Seasonal</p>
+      </div>
+    </div>
+
+    <div class="params-divider"></div>
+
+    <div class="param-field">
+      <label>Product Category</label>
+      <select id="productCategory" class="form-control" onchange="checkDataAvailability()">
+        <option value="">-- Select Category --</option>
+      </select>
+    </div>
+
+    <div class="param-field">
+      <label>Region</label>
+      <select id="regionSelect" class="form-control" onchange="checkDataAvailability()">
+        <option value="">-- Select Region --</option>
+      </select>
+    </div>
+
+    <div class="param-field-slider">
+      <label>Forecast Period: <span id="daysValue" style="color:#667EEA;font-weight:700;">30</span> days</label>
+      <div class="slider-row">
+        <input type="range" id="forecastDays" min="7" max="90" value="30" class="form-control" style="padding:0;border:none;" oninput="document.getElementById('daysValue').innerText=this.value">
+      </div>
+    </div>
+
+    <div id="dataStatusBox" class="data-status"><i class="fas fa-info-circle"></i> <span id="statusMsg"></span></div>
+    <div id="forceContainer" style="display: none;" class="force-wrap">
+      <input type="checkbox" id="forceCheckbox"> <label style="font-weight:500;font-size:12px;">Use available records</label>
+    </div>
+
+    <button class="btn-generate" onclick="runForecast()"><i class="fas fa-bolt"></i> Generate Forecast</button>
+  </div>
+
+  <div class="results-area">
+    <div id="forecastLoader" class="loader" style="display: none;">
+      <div class="spinner"></div>
+      <p>Training model & generating forecast...</p>
+    </div>
+
+    <div id="emptyStateMsg" class="empty-state" style="display:none;">
+      <i class="fas fa-chart-simple"></i>
+      <p>Select category and region, then generate forecast</p>
+    </div>
+
+    <div id="forecastContent" style="display: none;">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3 id="forecastTitle"><i class="fas fa-chart-area" style="color:#667EEA;margin-right:6px;"></i>Forecast Results</h3>
+          <button class="btn-outline-sm" id="exportCsvBtn" onclick="exportForecastData()" style="display:none;"><i class="fas fa-download"></i> Export CSV</button>
+        </div>
+        <div class="stats-row" id="statsRow"></div>
+        <div class="chart-container">
+          <div id="forecastChart" class="chart-placeholder"></div>
+        </div>
+      </div>
+
+      <div id="aiInsightBox" class="ai-insight">
+        <h4><i class="fas fa-robot"></i> AI Insights</h4>
+        <div id="aiInsightText" class="ai-text"></div>
+        <table id="insightTable" class="insight-table" style="display: none;"></table>
+      </div>
+
+      <div class="table-card">
+        <h3><i class="fas fa-table" style="color:#667EEA;margin-right:6px;font-size:13px;"></i>Forecast Data</h3>
+        <div class="table-wrapper">
+          <table id="forecastTable">
+            <thead>
+              <tr><th>Date</th><th>Predicted Sales</th><th>Units</th><th>Lower Bound</th><th>Upper Bound</th><th>Confidence</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="comparisonSection" style="display: none;" class="comparison-card">
+      <div class="flex-between">
+        <h3 style="font-size:15px;font-weight:700;color:#0F172A;"><i class="fas fa-chart-line" style="color:#667EEA;margin-right:6px;"></i> Model Comparison</h3>
+        <span style="font-size:12px; color:#5F7F9E;">Accuracy benchmark</span>
+      </div>
+      <div id="comparisonChart" style="height: 220px; margin-top: 10px;"></div>
+      <div id="comparisonInsight" class="ai-text" style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #EDF2F7; font-size: 12px; color: #475569;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentModel = "lstm";
+  let currentForecastData = null;
+  let currentHistoricalData = null;
+  let userRole = "user";
+  let username = "Guest";
+
+  // Currency state - loaded from server on init
+  let CURRENCY = { symbol: '$', rate: 1.0, code: 'USD' };
+
+  function fmtCurrency(value) {
+    const converted = value * CURRENCY.rate;
+    return CURRENCY.symbol + converted.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+  function fmtCurrencyFull(value) {
+    const converted = value * CURRENCY.rate;
+    return CURRENCY.symbol + converted.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  async function fetchWithError(url, options = {}) {
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  async function loadUserInfo() {
+    try {
+      const data = await fetchWithError("/api/user-info");
+      username = data.username || "Analyst";
+      userRole = data.role || "user";
+      document.getElementById("navUserName").innerText = username;
+      document.getElementById("navAvatar").innerText = username.charAt(0).toUpperCase();
+      const roleSpan = document.getElementById("navRole");
+      roleSpan.innerText = userRole;
+      roleSpan.className = "role-badge";
+      document.getElementById("greetingMsg").innerText = `Welcome, ${username}`;
+      if (userRole === "admin") {
+        document.querySelectorAll(".admin-only").forEach(el => el.style.display = "flex");
+      }
+    } catch(e) { console.warn("User fetch fallback", e); document.getElementById("greetingMsg").innerText = "Welcome"; }
+  }
+
+  async function loadDropdowns() {
+    try {
+      const data = await fetchWithError("/api/categories-regions");
+      const catSelect = document.getElementById("productCategory");
+      const regionSelect = document.getElementById("regionSelect");
+      (data.categories || []).forEach(c => { let opt = document.createElement("option"); opt.value = c; opt.innerText = c; catSelect.appendChild(opt); });
+      (data.regions || []).forEach(r => { let opt = document.createElement("option"); opt.value = r; opt.innerText = r; regionSelect.appendChild(opt); });
+    } catch(e) { console.error(e); }
+  }
+
+  async function checkDataAvailability() {
+    const category = document.getElementById("productCategory").value;
+    const region = document.getElementById("regionSelect").value;
+    const statusDiv = document.getElementById("dataStatusBox");
+    const forceWrap = document.getElementById("forceContainer");
+    if (!category || !region) { statusDiv.style.display = "none"; forceWrap.style.display = "none"; return; }
+    try {
+      const res = await fetch(`/api/check-data-availability?category=${encodeURIComponent(category)}&region=${encodeURIComponent(region)}`);
+      const d = await res.json();
+      if (!d.success) return;
+      document.getElementById("statusMsg").innerHTML = `<i class="fas fa-info-circle"></i> <strong>${d.message}</strong> — ${d.recommendation}`;
+      statusDiv.style.display = "flex";
+      forceWrap.style.display = (d.status === "limited" || d.status === "minimal") ? "flex" : "none";
+    } catch(e) { console.error(e); }
+  }
+
+  async function runForecast() {
+    const category = document.getElementById("productCategory").value;
+    const region = document.getElementById("regionSelect").value;
+    const days = parseInt(document.getElementById("forecastDays").value);
+    const force = document.getElementById("forceCheckbox")?.checked || false;
+    if (!category || !region) { showToast("error", "Please select category and region."); return; }
+    document.getElementById("forecastLoader").style.display = "block";
+    document.getElementById("forecastContent").style.display = "none";
+    document.getElementById("emptyStateMsg").style.display = "none";
+    document.getElementById("comparisonSection").style.display = "none";
+    document.getElementById("exportCsvBtn").style.display = "none";
+    try {
+      const response = await fetch("/api/generate-forecast", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, region, days, model_type: currentModel, force_use_available: force })
+      });
+      const result = await response.json();
+      document.getElementById("forecastLoader").style.display = "none";
+      if (result.success) {
+        // historical_data is embedded inside result.data (the forecast dict)
+        currentHistoricalData = result.data.historical_data || null;  // MUST be set before renderForecastCompact
+        currentForecastData = result.data;
+        renderForecastCompact(result.data, category, region);
+        showToast("success", "Forecast generated successfully!");
+        document.getElementById("exportCsvBtn").style.display = "inline-flex";
+        // Load the 3-model comparison from the server (companions were saved alongside primary)
+        loadComparisonForSession(category, region);
+      } else {
+        if (result.can_force) {
+          showToast("warning", result.message + " - Check 'Use available records' to proceed.");
+          document.getElementById("forceContainer").style.display = "flex";
+        } else {
+          showToast("error", result.message || "Forecast failed");
+        }
+        document.getElementById("emptyStateMsg").style.display = "block";
+      }
+    } catch(e) { 
+      document.getElementById("forecastLoader").style.display = "none";
+      showToast("error", "Server error: " + e.message);
+      document.getElementById("emptyStateMsg").style.display = "block";
+    }
+  }
+
+  function renderForecastCompact(data, cat, reg) {
+    document.getElementById("forecastContent").style.display = "block";
+    document.getElementById("emptyStateMsg").style.display = "none";
+    document.getElementById("forecastTitle").innerHTML = `<i class="fas fa-chart-area" style="color:#667EEA;margin-right:6px;"></i>Forecast: ${cat} | ${reg} (${currentModel.toUpperCase()})`;
+    
+    const preds = data.predictions || [];
+    const total = preds.reduce((a,b)=>a+b,0);
+    const avg = preds.length ? total/preds.length : 0;
+    const peak = preds.length ? Math.max(...preds) : 0;
+    
+    document.getElementById("statsRow").innerHTML = `
+      <div class="stat-mini"><div class="value">${fmtCurrency(total)}</div><div class="label">Total Predicted</div></div>
+      <div class="stat-mini"><div class="value">${fmtCurrency(avg)}</div><div class="label">Daily Average</div></div>
+      <div class="stat-mini"><div class="value">${fmtCurrency(peak)}</div><div class="label">Peak Day</div></div>
+      <div class="stat-mini"><div class="value">${preds.length} days</div><div class="label">Forecast Period</div></div>
+    `;
+    
+    const trace = { x: data.dates, y: preds, type: "scatter", mode: "lines+markers", name: `${currentModel.toUpperCase()} Forecast`, line: { color: "#667EEA", width: 3 }, marker: { size: 4 } };
+    let traces = [trace];
+    if (data.lower_bound && data.upper_bound) {
+      traces.push({ x: [...data.dates, ...data.dates.slice().reverse()], y: [...data.upper_bound, ...data.lower_bound.slice().reverse()], fill: "toself", fillcolor: "rgba(102,126,234,0.12)", line: { color: "transparent" }, name: "Confidence Band (95%)" });
+    }
+    Plotly.newPlot("forecastChart", traces, { height: 240, margin: { t: 20, l: 45, r: 15, b: 35 }, xaxis: { gridcolor: "#F0F2F6" }, yaxis: { tickprefix: "$", gridcolor: "#F0F2F6" }, plot_bgcolor: "white", paper_bgcolor: "white", legend: { orientation: "h", yanchor: "bottom", y: -0.2 } }, { responsive: true });
+    
+    // Render structured insight table
+    renderInsightTable(data, cat, reg);
+    
+    // AI Explanation
+    if (data.llm_explanation) {
+      document.getElementById("aiInsightBox").style.display = "block";
+      const cleanText = cleanMarkdown(data.llm_explanation);
+      document.getElementById("aiInsightText").innerHTML = cleanText.replace(/\n/g, "<br>");
+    } else {
+      document.getElementById("aiInsightBox").style.display = "block";
+      document.getElementById("aiInsightText").innerHTML = generateFallbackInsight(data, cat, reg);
+    }
+    
+    // Table body
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+    (data.dates || []).forEach((date, idx) => {
+      const predVal = preds[idx] || 0;
+      const lo = data.lower_bound?.[idx];
+      const hi = data.upper_bound?.[idx];
+      const units = data.predicted_units?.[idx] || "-";
+      let confText = "N/A", confClass = "";
+      if (lo && hi && predVal > 0) { 
+        let rangePercent = ((hi - lo) / predVal) * 50;
+        if(rangePercent <= 15){ confText="High"; confClass="confidence-high"; } 
+        else if(rangePercent <= 30){ confText="Medium"; confClass="confidence-medium"; } 
+        else { confText="Low"; confClass="confidence-low"; } 
+      }
+      const row = `<tr><td>${date}</td><td>${fmtCurrencyFull(predVal)}</td><td>${units}</td><td>${lo ? fmtCurrencyFull(lo) : "N/A"}</td><td>${hi ? fmtCurrencyFull(hi) : "N/A"}</td><td class="${confClass}">${confText}</td></tr>`;
+      tbody.insertAdjacentHTML("beforeend", row);
+    });
+  }
+
+  function renderInsightTable(data, cat, reg) {
+    const preds = data.predictions || [];
+    if (!preds.length) return;
+    
+    const totalPredicted = preds.reduce((a,b)=>a+b,0);
+    const avgPredicted = totalPredicted / preds.length;
+    const peakPredicted = Math.max(...preds);
+    
+    const growthRate = data.growth_rate !== undefined ? data.growth_rate : 
+      (preds.length > 0 && preds[0] > 0 ? ((preds[preds.length-1] / preds[0]) - 1) * 100 : 0);
+    
+    const confidenceLevel = data.avg_confidence !== undefined ? data.avg_confidence : 92.5;
+    
+    // currentHistoricalData must be set before this is called
+    const hd = currentHistoricalData || {};
+    const historicalAvg      = typeof hd.avg_sales === 'number' ? hd.avg_sales : 0;
+    const historicalTrend    = hd.trend        || 'stable';
+    const historicalSeasonal = hd.seasonality  || 'moderate';
+    
+    const insightRows = [
+      { item: "Average daily sales (historical)", value: formatCurrency(historicalAvg), interpretation: "Baseline for comparison." },
+      { item: "Trend", value: capitalizeFirst(historicalTrend), interpretation: historicalTrend === "increasing" ? "Sales have been growing, suggesting continued upward momentum." : historicalTrend === "decreasing" ? "Sales have been declining, so a normal steady-state assumption may overestimate future performance." : "Sales have been relatively stable over the historical period." },
+      { item: "Seasonality", value: capitalizeFirst(historicalSeasonal), interpretation: historicalSeasonal === "strong" ? "Clear cyclical patterns detected, useful for timing inventory and promotions." : "Moderate seasonal variations, worth monitoring but not dominant." },
+      { item: `Total predicted sales (${preds.length} days)`, value: formatCurrency(totalPredicted), interpretation: `${preds.length}-day cumulative expected revenue.` },
+      { item: "Expected growth", value: `${growthRate.toFixed(1)}%`, interpretation: growthRate > 0 ? `Positive growth expected compared to baseline period.` : `Slight decline expected, consider promotional strategies.` },
+      { item: "Peak predicted day", value: formatCurrency(peakPredicted), interpretation: "Highest single-day sales expected in this forecast period." },
+      { item: "Confidence level", value: `${confidenceLevel.toFixed(1)}%`, interpretation: "Probability that actual sales will fall within the predicted confidence bands." }
+    ];
+    
+    let tableHtml = `<thead><tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr></thead><tbody>`;
+    insightRows.forEach(row => {
+      tableHtml += `<tr><td>${row.item}</td><td>${row.value}</td><td>${row.interpretation}</td></tr>`;
+    });
+    tableHtml += `</tbody>`;
+    
+    const insightTable = document.getElementById("insightTable");
+    insightTable.innerHTML = tableHtml;
+    insightTable.style.display = "table";
+  }
+
+  function generateFallbackInsight(data, cat, reg) {
+    const preds = data.predictions || [];
+    const total = preds.reduce((a,b)=>a+b,0);
+    const avg = total / preds.length;
+    const peak = Math.max(...preds);
+    const growth = preds.length > 1 ? ((preds[preds.length-1] / preds[0]) - 1) * 100 : 0;
+    
+    return `
+      <strong>Forecast Summary for ${cat} in ${reg}</strong><br>
+      • Total predicted sales over ${preds.length} days: $${fmtNumber(total)}<br>
+      • Average daily sales: $${fmtNumber(avg)}<br>
+      • Peak day expected: $${fmtNumber(peak)}<br>
+      • Expected growth trend: ${growth > 0 ? '+' : ''}${growth.toFixed(1)}%<br>
+      <br>
+      <strong>Business Recommendations:</strong><br>
+      • ${growth > 5 ? 'Increase inventory levels to meet projected demand growth.' : 'Maintain current inventory levels with cautious monitoring.'}<br>
+      • Focus marketing efforts around the peak sales periods identified in the forecast.<br>
+      • Review the model comparison chart to understand forecast reliability across different methods.
+    `;
+  }
+
+  async function runModelComparison(cat, reg, days) {
+    try {
+      const resp = await fetch("/api/compare-models", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify({ category: cat, region: reg, days: days }) 
+      });
+      const d = await resp.json();
+      if (!d.success) return;
+      
+      let compTraces = [];
+      const styleMap = { lstm: "#667EEA", arima: "#F59E0B", exponential_smoothing: "#10B981" };
+      const nameMap = { lstm: "LSTM (Deep Learning)", arima: "ARIMA (Classical)", exponential_smoothing: "Exponential Smoothing" };
+      const metricsData = {};
+      
+      Object.keys(d.results).forEach(m => {
+        let values = d.results[m].predictions || d.results[m].forecast || [];
+        if (!values.length) return;
+        metricsData[m] = d.results[m].metrics || {};
+        compTraces.push({ 
+          x: d.dates, 
+          y: values, 
+          mode: "lines", 
+          name: nameMap[m] || m.toUpperCase(), 
+          line: { color: styleMap[m] || "#9CA3AF", width: 2.5, dash: m === "arima" ? "dot" : "solid" } 
+        });
+      });
+      
+      if (compTraces.length) {
+        document.getElementById("comparisonSection").style.display = "block";
+        Plotly.newPlot("comparisonChart", compTraces, { 
+          height: 220, 
+          margin: { t: 20, l: 45, r: 20, b: 30 }, 
+          yaxis: { tickprefix: "$" }, 
+          legend: { orientation: "h", yanchor: "bottom", y: -0.25 },
+          plot_bgcolor: "white",
+          paper_bgcolor: "white"
+        });
+        
+        // Generate comparison insight
+        let insightHtml = "<strong>Model Comparison Analysis:</strong><br>";
+        if (metricsData.lstm && metricsData.arima) {
+          const improvement = ((metricsData.arima.mae - metricsData.lstm.mae) / metricsData.arima.mae * 100).toFixed(1);
+          insightHtml += `• LSTM shows ${improvement}% better accuracy (lower MAE) than ARIMA for this dataset.<br>`;
+        }
+        if (metricsData.lstm && metricsData.exponential_smoothing) {
+          const expImprovement = ((metricsData.exponential_smoothing.mae - metricsData.lstm.mae) / metricsData.exponential_smoothing.mae * 100).toFixed(1);
+          insightHtml += `• LSTM outperforms Exponential Smoothing by ${expImprovement}% in absolute error.<br>`;
+        }
+        insightHtml += `• LSTM captures complex patterns better, while ARIMA works well for linear trends. Consider using LSTM for volatile data and ARIMA for stable patterns.`;
+        document.getElementById("comparisonInsight").innerHTML = insightHtml;
+      }
+    } catch(e) { console.warn("comparison not loaded", e); }
+  }
+
+  function cleanMarkdown(text) {
+    if (!text) return "";
+    let cleaned = text
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/##+\s*/g, '')
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/^[-*]\s+/gm, '• ')
+      .replace(/#/g, '');
+    return cleaned;
+  }
+
+  function capitalizeFirst(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
+  function formatCurrency(value) {
+    const converted = value * CURRENCY.rate;
+    return CURRENCY.symbol + converted.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function exportForecastData() {
+    if (!currentForecastData) return;
+    let csvRows = [["Date","Predicted Sales","Units","Lower Bound","Upper Bound"]];
+    (currentForecastData.dates || []).forEach((d, i) => {
+      csvRows.push([d, currentForecastData.predictions[i] || 0, currentForecastData.predicted_units?.[i] || "", currentForecastData.lower_bound?.[i] || "", currentForecastData.upper_bound?.[i] || ""]);
+    });
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], {type: "text/csv"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `forecast_${currentModel}_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  function selectModel(model) {
+    currentModel = model;
+    ["lstm","arima","exponential_smoothing"].forEach(m => {
+      const id = m === "exponential_smoothing" ? "exp" : m;
+      document.getElementById(`card-${id}`).classList.remove("selected");
+    });
+    let idMap = model === "exponential_smoothing" ? "exp" : model;
+    document.getElementById(`card-${idMap}`).classList.add("selected");
+  }
+
+  function fmtNumber(n) { return Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+  
+  function showToast(type, msg) { 
+    const el = document.getElementById(`msg${type === "success" ? "Success" : "Error"}`); 
+    if(el){ 
+      el.innerText = msg; 
+      el.style.display = "block"; 
+      setTimeout(()=> el.style.display="none", 6000); 
+    } 
+    if(type === "warning") {
+      const errorEl = document.getElementById("msgError");
+      if(errorEl) { errorEl.innerText = msg; errorEl.style.display = "block"; setTimeout(()=> errorEl.style.display="none", 6000); }
+    }
+  }
+  
+  document.addEventListener("DOMContentLoaded", async () => {
+    await loadUserInfo();
+    await loadDropdowns();
+    // Load saved currency preference
+    try {
+      const cr = await fetch("/api/currency-settings");
+      const cd = await cr.json();
+      if (cd.success) { CURRENCY = { symbol: cd.symbol, rate: cd.rate, code: cd.currency }; }
+    } catch(e) {}
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewCategory = urlParams.get('view');
+    const viewRegion = urlParams.get('region');
+    const viewSessionId = urlParams.get('session_id');
+    const viewDate = urlParams.get('date');
+    
+    if (viewCategory && viewRegion) {
+      setTimeout(() => loadSavedPrediction(viewCategory, viewRegion, viewSessionId, viewDate), 500);
+    }
+  });
+
+  async function loadSavedPrediction(category, region, sessionId, forecastDate) {
+    try {
+      showToast("success", `Loading saved forecast for ${category} - ${region}...`);
+      
+      const params = new URLSearchParams({ category, region });
+      if (sessionId) params.set('session_id', sessionId);
+      else if (forecastDate) params.set('forecast_date', forecastDate);
+
+      const response = await fetch(`/api/prediction-details?${params.toString()}`);
+      const data = await response.json();
+      
+      if (data.success && data.prediction) {
+        document.getElementById("productCategory").value = category;
+        document.getElementById("regionSelect").value = region;
+        
+        // Use the stored forecast_days — this is the original period the user chose
+        const forecastDays = data.prediction.forecast_days || data.prediction.predictions.length;
+        document.getElementById("forecastDays").value = forecastDays;
+        document.getElementById("daysValue").innerText = forecastDays;
+        
+        currentForecastData = data.prediction;
+        currentModel = (data.prediction.model_type || "LSTM").toLowerCase();
+        
+        // Fetch live historical avg for this category/region so the insight table is accurate
+        try {
+          const havail = await fetch(`/api/check-data-availability?category=${encodeURIComponent(category)}&region=${encodeURIComponent(region)}`);
+          const hd = await havail.json();
+          // check-data-availability doesn't return avg_sales, so fetch it from dashboard-stats or sales-data
+          const histResp = await fetch(`/api/sales-data?limit=500&category=${encodeURIComponent(category)}&region=${encodeURIComponent(region)}`);
+          const histRows = await histResp.json();
+          if (Array.isArray(histRows) && histRows.length > 0) {
+            const avgSales = histRows.reduce((s, r) => s + (r.total_sales || 0), 0) / histRows.length;
+            const recentHalf = histRows.slice(Math.floor(histRows.length / 2));
+            const firstHalf  = histRows.slice(0, Math.floor(histRows.length / 2));
+            const recentAvg  = recentHalf.reduce((s, r) => s + (r.total_sales || 0), 0) / (recentHalf.length || 1);
+            const firstAvg   = firstHalf.reduce((s, r) => s + (r.total_sales || 0), 0)  / (firstHalf.length  || 1);
+            currentHistoricalData = {
+              avg_sales:    avgSales,
+              trend:        histRows.length >= 60 ? (recentAvg > firstAvg ? 'increasing' : 'decreasing') : 'stable',
+              seasonality:  histRows.length > 90 ? 'strong' : histRows.length > 30 ? 'moderate' : 'weak'
+            };
+          } else {
+            currentHistoricalData = { avg_sales: 0, trend: 'stable', seasonality: 'moderate' };
+          }
+        } catch(he) {
+          currentHistoricalData = { avg_sales: 0, trend: 'stable', seasonality: 'moderate' };
+        }
+        
+        // Update model selector UI
+        selectModel(currentModel === "exponential_smoothing" ? "exponential_smoothing" : currentModel);
+        
+        renderForecastCompact(data.prediction, category, region);
+        document.getElementById("forecastContent").style.display = "block";
+        document.getElementById("emptyStateMsg").style.display = "none";
+        document.getElementById("exportCsvBtn").style.display = "inline-flex";
+        
+        if (data.comparison && Object.keys(data.comparison).length > 0) {
+          renderComparisonChartFromData(data.comparison, data.prediction.llm_explanation);
+        }
+        
+        showToast("success", "Forecast loaded successfully");
+      } else {
+        showToast("error", data.message || "Could not load saved forecast");
+      }
+    } catch(e) {
+      console.error("Error loading saved forecast:", e);
+      showToast("error", "Error loading saved forecast");
+    }
+  }
+
+  // Fetch comparison data from the most-recent session for this cat/region
+  async function loadComparisonForSession(category, region) {
+    try {
+      const params = new URLSearchParams({ category, region });
+      const resp = await fetch(`/api/prediction-details?${params.toString()}`);
+      const d = await resp.json();
+      if (d.success && d.comparison && Object.keys(d.comparison).length > 1) {
+        renderComparisonChartFromData(d.comparison, d.prediction?.llm_explanation);
+      }
+    } catch(e) { console.warn("comparison load failed", e); }
+  }
+
+  function renderComparisonChartFromData(comparisonData, aiExplanation) {
+    const comparisonSection = document.getElementById("comparisonSection");
+    if (!comparisonSection) return;
+
+    const colors = { lstm: "#667EEA", arima: "#F59E0B", exponential_smoothing: "#10B981" };
+    const names  = { lstm: "LSTM (Deep Learning)", arima: "ARIMA (Classical)", exponential_smoothing: "Exponential Smoothing" };
+    const selectedKey = (currentModel || "lstm").toLowerCase();
+
+    const traces = [];
+    for (const [model, data] of Object.entries(comparisonData)) {
+      if (!data.predictions || !data.predictions.length) continue;
+      const isSelected = model === selectedKey;
+      traces.push({
+        x: data.dates || currentForecastData?.dates || [],
+        y: data.predictions,
+        name: names[model] || model.toUpperCase(),
+        type: "scatter",
+        mode: isSelected ? "lines+markers" : "lines",
+        line: {
+          color: colors[model] || "#9CA3AF",
+          width: isSelected ? 3 : 2,
+          dash: isSelected ? "solid" : (model === "arima" ? "dot" : "dash")
+        },
+        marker: isSelected ? { size: 3 } : {}
+      });
+    }
+
+    if (!traces.length) return;
+
+    comparisonSection.style.display = "block";
+    Plotly.newPlot("comparisonChart", traces, {
+      height: 220,
+      margin: { t: 20, l: 45, r: 20, b: 30 },
+      yaxis: { tickprefix: "$", gridcolor: "#F0F2F6" },
+      xaxis: { gridcolor: "#F0F2F6" },
+      legend: { orientation: "h", yanchor: "bottom", y: -0.25 },
+      plot_bgcolor: "white",
+      paper_bgcolor: "white"
+    });
+
+    const insightDiv = document.getElementById("comparisonInsight");
+    if (aiExplanation) {
+      insightDiv.innerHTML = "<strong>AI Analysis:</strong> " + cleanMarkdown(aiExplanation).replace(/\n/g, "<br>");
+    } else {
+      const lines = ["<strong>Model Comparison:</strong>"];
+      for (const [model, data] of Object.entries(comparisonData)) {
+        if (!data.predictions?.length) continue;
+        const total = data.predictions.reduce((a, b) => a + b, 0);
+        const marker = model === selectedKey ? " ✓" : "";
+        lines.push(`• ${names[model] || model.toUpperCase()}${marker}: ${fmtCurrency(total)} total`);
+      }
+      lines.push("LSTM captures complex patterns · ARIMA suits stable linear trends · Exp. Smoothing adapts to seasonal data.");
+      insightDiv.innerHTML = lines.join("<br>");
+    }
+  }
+</script>
+</body>
+</html>

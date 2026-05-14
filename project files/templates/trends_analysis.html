@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trends Analysis - SalesForecast AI</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+:root{--primary:#667eea;--secondary:#764ba2;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--dark:#1f2937;--light:#f9fafb;--gray:#6b7280}
+body{background:#f5f7fa;color:var(--dark)}
+.sidebar{position:fixed;left:0;top:0;height:100vh;width:250px;background:white;box-shadow:2px 0 8px rgba(0,0,0,.08);display:flex;flex-direction:column;z-index:1000}
+.sidebar-header{padding:24px 20px 20px;border-bottom:1px solid #e5e7eb}
+.logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:11px;color:#9ca3af;margin-top:3px}
+.nav-links{padding:12px 0;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;padding:11px 20px;color:var(--gray);text-decoration:none;transition:all .2s;font-size:14px;font-weight:500}
+.nav-item:hover,.nav-item.active{background:linear-gradient(90deg,rgba(102,126,234,.1),rgba(118,75,162,.1));color:var(--primary);border-right:3px solid var(--primary)}
+.nav-item i{margin-right:11px;width:18px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid #e5e7eb}
+.user-badge{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--dark)}
+.role-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase}
+.role-admin{background:rgba(239,68,68,.15);color:#dc2626}
+.role-user{background:rgba(102,126,234,.15);color:var(--primary)}
+.logout-link{display:block;text-align:center;padding:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px}
+.main-content{margin-left:250px;padding:24px;min-height:100vh}
+.top-bar{background:white;border-radius:12px;padding:15px 22px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.top-bar h2{font-size:19px;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 17px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,.35)}
+.btn-success{background:linear-gradient(135deg,#10b981,#34d399)}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#f87171)}
+.btn-outline{background:white;color:var(--primary);border:2px solid var(--primary)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-full{width:100%;justify-content:center;margin-bottom:8px}
+.card{background:white;border-radius:12px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card-title{font-size:16px;font-weight:700}
+.form-group{margin-bottom:15px}
+.form-group label{display:block;margin-bottom:6px;font-weight:600;font-size:13px}
+.form-control{width:100%;padding:9px 13px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;background:white;transition:border-color .2s}
+.form-control:focus{outline:none;border-color:var(--primary)}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:22px}
+.stat-card{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:16px;transition:transform .2s}
+.stat-card:hover{transform:translateY(-3px)}
+.stat-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.si-blue{background:linear-gradient(135deg,#667eea,#764ba2);color:white}
+.si-green{background:linear-gradient(135deg,#10b981,#34d399);color:white}
+.si-orange{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:white}
+.si-purple{background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:white}
+.si-red{background:linear-gradient(135deg,#ef4444,#f87171);color:white}
+.stat-label{font-size:12px;color:var(--gray);font-weight:500}
+.stat-value{font-size:24px;font-weight:800;line-height:1.1}
+.stat-sub{font-size:11px;font-weight:600;margin-top:3px}
+.positive{color:var(--success)}.negative{color:var(--danger)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:#f8f9fa;padding:10px 13px;text-align:left;font-weight:700;color:var(--gray);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e5e7eb}
+td{padding:11px 13px;border-bottom:1px solid #f3f4f6;font-size:13px;color:var(--dark)}
+tr:hover td{background:#fafafa}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-success{background:rgba(16,185,129,.15);color:#059669}
+.badge-warning{background:rgba(245,158,11,.15);color:#d97706}
+.badge-danger{background:rgba(239,68,68,.15);color:#dc2626}
+.badge-info{background:rgba(102,126,234,.15);color:var(--primary)}
+.msg-box{padding:13px 16px;border-radius:8px;margin-bottom:14px;display:none;font-size:13px}
+.msg-success{background:#d1fae5;color:#065f46;border-left:4px solid #10b981}
+.msg-error{background:#fee2e2;color:#991b1b;border-left:4px solid #ef4444}
+.msg-warning{background:#fffbeb;color:#92400e;border-left:4px solid #f59e0b}
+.spinner{width:36px;height:36px;border:4px solid #e5e7eb;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-box{text-align:center;padding:40px;color:var(--gray)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray)}
+.empty-state i{font-size:44px;margin-bottom:14px;display:block;opacity:.3}
+.admin-gate{display:none!important}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}}
+
+.tr-filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px}
+.tr-filters .form-group{margin-bottom:0;min-width:140px}
+.period-btns{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.period-btn{padding:7px 14px;border:2px solid #e5e7eb;border-radius:20px;background:white;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray);transition:all .2s}
+.period-btn.active,.period-btn:hover{border-color:var(--primary);color:var(--primary);background:rgba(102,126,234,.07)}
+.charts-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+@media(max-width:1000px){.charts-2col{grid-template-columns:1fr}}
+.ai-insights{background:linear-gradient(135deg,#f5f7fa,#e9ecf3);border-left:4px solid var(--primary);padding:18px;border-radius:8px;font-size:13px;line-height:1.8;margin-top:16px}
+
+</style>
+</head>
+<body>
+<div class="sidebar"><div class="sidebar-header"><div class="logo">SalesForecast AI</div><div class="logo-sub">LSTM · Deep Learning</div></div>
+  <div class="nav-links"><a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+<a href="/data-management" class="nav-item"><i class="fas fa-database"></i><span>Data Management</span></a>
+<a href="/forecast" class="nav-item"><i class="fas fa-bullseye"></i><span>Generate Forecast</span></a>
+<a href="/trends-analysis" class="nav-item active"><i class="fas fa-chart-bar"></i><span>Trends Analysis</span></a>
+<a href="/reports" class="nav-item"><i class="fas fa-file-export"></i><span>Reports</span></a>
+<a href="/anomalies" class="nav-item"><i class="fas fa-exclamation-triangle"></i><span>Anomalies</span></a>
+<a href="/what-if" class="nav-item"><i class="fas fa-sliders-h"></i><span>What-If Analysis</span></a>
+<a href="/model-training" class="nav-item admin-gate"><i class="fas fa-brain"></i><span>Model Training</span></a>
+<a href="/admin/users" class="nav-item admin-gate"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+</div>
+  <div class="sidebar-footer"><div class="user-badge"><div class="user-avatar" id="nav-avatar">?</div>
+      <div><div class="user-name" id="nav-username">...</div><div style="margin-top:2px"><span class="role-badge" id="nav-role-badge">...</span></div></div></div>
+    <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></div></div>
+<div class="main-content">
+
+  <div class="top-bar">
+    <h2><i class="fas fa-chart-bar" style="color:var(--primary);margin-right:10px"></i>Trends Analysis</h2>
+    <button class="btn btn-sm btn-outline" onclick="exportTrends()"><i class="fas fa-download"></i>Export</button>
+  </div>
+  <div id="msg-error" class="msg-box msg-error"></div>
+
+  <div class="card">
+    <div class="tr-filters">
+      <div class="form-group"><label>Category</label><select id="tr-category" class="form-control" onchange="loadAll()"><option value="">All Categories</option></select></div>
+      <div class="form-group"><label>Region</label><select id="tr-region" class="form-control" onchange="loadAll()"><option value="">All Regions</option></select></div>
+      <div class="form-group"><label>Metric</label>
+        <select id="tr-metric" class="form-control" onchange="loadAll()">
+          <option value="sales">Total Sales</option>
+          <option value="units">Units Sold</option>
+          <option value="avg_price">Average Price</option>
+        </select>
+      </div>
+      <button class="btn btn-sm" onclick="loadAll()"><i class="fas fa-sync"></i>Refresh</button>
+    </div>
+    <div class="period-btns" id="period-btns">
+      <button class="period-btn" data-p="7d" onclick="setPeriod(this)">7 Days</button>
+      <button class="period-btn active" data-p="30d" onclick="setPeriod(this)">30 Days</button>
+      <button class="period-btn" data-p="90d" onclick="setPeriod(this)">90 Days</button>
+      <button class="period-btn" data-p="6m" onclick="setPeriod(this)">6 Months</button>
+      <button class="period-btn" data-p="1y" onclick="setPeriod(this)">1 Year</button>
+      <button class="period-btn" data-p="all" onclick="setPeriod(this)">All Time</button>
+    </div>
+  </div>
+
+  <div id="tr-loading" class="loading-box" style="display:none"><div class="spinner"></div><p>Loading trends...</p></div>
+
+  <div id="tr-content" style="display:none">
+    <div class="stats-grid" id="tr-stats"></div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title" id="main-chart-title">Sales Over Time</span></div>
+      <div id="main-chart" style="height:300px"></div>
+    </div>
+
+    <div class="charts-2col">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header"><span class="card-title">Category Performance</span></div>
+        <div id="category-chart" style="height:260px"></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header"><span class="card-title">Regional Breakdown</span></div>
+        <div id="region-chart" style="height:260px"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="card-header"><span class="card-title">Day-of-Week Patterns</span></div>
+      <div id="dow-chart" style="height:220px"></div>
+    </div>
+
+    <div class="card" id="ai-card" style="margin-top:18px">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-robot" style="color:var(--primary);margin-right:8px"></i>AI Analysis</span>
+        <button class="btn btn-sm btn-outline" onclick="getAIAnalysis()"><i class="fas fa-sync"></i>Refresh AI</button>
+      </div>
+      <div class="ai-insights" id="ai-text">Click Refresh AI to generate insights for the current filters.</div>
+    </div>
+  </div>
+
+  <div id="tr-empty" class="card">
+    <div class="empty-state"><i class="fas fa-chart-bar"></i><p>No data found. <a href="/data-management">Upload sales data</a> to see trends.</p></div>
+  </div>
+</div>
+<script>(async function(){try{const r=await fetch("/api/user-info");const u=await r.json();const name=u.username||"User";const role=u.role||"user";document.getElementById("nav-avatar").textContent=name[0].toUpperCase();document.getElementById("nav-username").textContent=name;const rb=document.getElementById("nav-role-badge");rb.textContent=role;rb.className="role-badge role-"+role;if(role==="admin"){document.querySelectorAll(".admin-gate").forEach(function(el){el.style.setProperty("display","flex","important");});}window._userRole=role;window._userName=name;document.dispatchEvent(new CustomEvent("userLoaded",{detail:{role:role,name:name}}));}catch(e){console.error("nav",e);}})();</script>
+<script>
+
+let activePeriod="30d";
+
+document.addEventListener("DOMContentLoaded",async function(){
+  await loadDropdowns();
+  loadAll();
+});
+
+async function loadDropdowns(){
+  try{
+    const r=await fetch("/api/categories-regions");const d=await r.json();
+    const cs=document.getElementById("tr-category");const rs=document.getElementById("tr-region");
+    (d.categories||[]).sort().forEach(function(c){const o=document.createElement("option");o.value=c;o.textContent=c;cs.appendChild(o);});
+    (d.regions||[]).sort().forEach(function(r){const o=document.createElement("option");o.value=r;o.textContent=r;rs.appendChild(o);});
+  }catch(e){console.error(e);}
+}
+
+function setPeriod(btn){
+  document.querySelectorAll(".period-btn").forEach(function(b){b.classList.remove("active");});
+  btn.classList.add("active");
+  activePeriod=btn.dataset.p;
+  loadAll();
+}
+
+async function loadAll(){
+  const cat=document.getElementById("tr-category").value;
+  const reg=document.getElementById("tr-region").value;
+  const metric=document.getElementById("tr-metric").value;
+  document.getElementById("tr-loading").style.display="block";
+  document.getElementById("tr-content").style.display="none";
+  document.getElementById("tr-empty").style.display="none";
+  try{
+    let url="/api/sales-data?limit=2000";
+    if(cat)url+="&category="+encodeURIComponent(cat);
+    if(reg)url+="&region="+encodeURIComponent(reg);
+    // Apply period filter via date
+    const cutoff=getPeriodDate(activePeriod);
+    if(cutoff)url+="&start_date="+cutoff;
+    const data=await fetch(url).then(r=>r.json());
+    document.getElementById("tr-loading").style.display="none";
+    if(!data.length){document.getElementById("tr-empty").style.display="block";return;}
+    document.getElementById("tr-content").style.display="block";
+    renderAllCharts(data,metric,cat,reg);
+    // Auto-load AI analysis when data loads
+    await getAIAnalysis();
+  }catch(e){
+    document.getElementById("tr-loading").style.display="none";
+    document.getElementById("tr-empty").style.display="block";
+  }
+}
+
+function getPeriodDate(p){
+  const d=new Date();
+  if(p==="7d"){d.setDate(d.getDate()-7);}
+  else if(p==="30d"){d.setDate(d.getDate()-30);}
+  else if(p==="90d"){d.setDate(d.getDate()-90);}
+  else if(p==="6m"){d.setMonth(d.getMonth()-6);}
+  else if(p==="1y"){d.setFullYear(d.getFullYear()-1);}
+  else return null;
+  return d.toISOString().split("T")[0];
+}
+
+function renderAllCharts(data,metric,cat,reg){
+  const yField=metric==="units"?"units_sold":metric==="avg_price"?"unit_price":"total_sales";
+  // Group by date
+  const byDate={};data.forEach(function(r){const d=r.date.substring(0,10);byDate[d]=(byDate[d]||0)+(parseFloat(r[yField])||0);});
+  const dates=Object.keys(byDate).sort();const vals=dates.map(function(d){return byDate[d];});
+  // Stats
+  const total=vals.reduce(function(a,b){return a+b;},0);
+  const avg=vals.length?total/vals.length:0;
+  const peak=vals.length?Math.max.apply(null,vals):0;
+  const growth=vals.length>=2?((vals[vals.length-1]-vals[0])/Math.max(vals[0],1))*100:0;
+  document.getElementById("tr-stats").innerHTML=
+    statCard("si-blue","fa-dollar-sign",metric==="units"?"Total Units":metric==="avg_price"?"Avg Price":"Total Sales",
+      metric==="units"?total.toLocaleString():"$"+fmt(total))+
+    statCard("si-green","fa-chart-line","Avg per Day",metric==="units"?avg.toFixed(0):"$"+fmt(avg))+
+    statCard("si-orange","fa-crown","Peak","$"+fmt(peak))+
+    statCard("si-purple","fa-arrow-trend-up","Growth",growth.toFixed(1)+"%",growth>=0?"positive":"negative");
+  // Main trend chart
+  Plotly.newPlot("main-chart",[{x:dates,y:vals,type:"scatter",mode:"lines",fill:"tozeroy",line:{color:"#667eea",width:2.5},fillcolor:"rgba(102,126,234,.1)"}],
+    {height:300,margin:{l:60,r:15,t:15,b:50},xaxis:{gridcolor:"#f5f5f5"},yaxis:{gridcolor:"#f5f5f5",tickprefix:metric==="units"?"":"$"},plot_bgcolor:"white",paper_bgcolor:"white"},{responsive:true});
+  document.getElementById("main-chart-title").textContent=(metric==="units"?"Units Sold":metric==="avg_price"?"Average Price":"Total Sales")+" Over Time";
+  // Category chart
+  const byCat={};data.forEach(function(r){byCat[r.product_category]=(byCat[r.product_category]||0)+(parseFloat(r[yField])||0);});
+  const catKeys=Object.keys(byCat).sort(function(a,b){return byCat[b]-byCat[a];}).slice(0,8);
+  Plotly.newPlot("category-chart",[{y:catKeys,x:catKeys.map(function(k){return byCat[k];}),type:"bar",orientation:"h",marker:{color:"#667eea"}}],
+    {height:260,margin:{l:140,r:15,t:15,b:50},xaxis:{gridcolor:"#f5f5f5"},plot_bgcolor:"white",paper_bgcolor:"white"},{responsive:true});
+  // Region chart
+  const byReg={};data.forEach(function(r){byReg[r.region]=(byReg[r.region]||0)+(parseFloat(r[yField])||0);});
+  const regKeys=Object.keys(byReg);
+  Plotly.newPlot("region-chart",[{labels:regKeys,values:regKeys.map(function(k){return byReg[k];}),type:"pie",hole:.4,marker:{colors:["#667eea","#764ba2","#10b981","#f59e0b","#8b5cf6","#ef4444"]}}],
+    {height:260,margin:{l:10,r:10,t:20,b:10},plot_bgcolor:"white",paper_bgcolor:"white"},{responsive:true});
+  // Day-of-week
+  const dow=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const dowVals=new Array(7).fill(0);const dowCnt=new Array(7).fill(0);
+  data.forEach(function(r){const d=new Date(r.date);const idx=d.getDay();dowVals[idx]+=(parseFloat(r[yField])||0);dowCnt[idx]++;});
+  const dowAvg=dowVals.map(function(v,i){return dowCnt[i]?v/dowCnt[i]:0;});
+  Plotly.newPlot("dow-chart",[{x:dow,y:dowAvg,type:"bar",marker:{color:dowAvg.map(function(v){return v===Math.max.apply(null,dowAvg)?"#10b981":"#667eea";})}}],
+    {height:220,margin:{l:60,r:15,t:15,b:40},xaxis:{gridcolor:"#f5f5f5"},yaxis:{gridcolor:"#f5f5f5",tickprefix:metric==="units"?"":"$"},plot_bgcolor:"white",paper_bgcolor:"white"},{responsive:true});
+}
+
+function statCard(ic,fa,label,val,extra){
+  return '<div class="stat-card"><div class="stat-icon '+ic+'"><i class="fas '+fa+'"></i></div><div><div class="stat-label">'+label+'</div><div class="stat-value" style="font-size:20px">'+val+'</div>'+(extra?'<div class="stat-sub '+(extra||"")+'">'+(extra||"")+"</div>":"")+"</div></div>";
+}
+
+async function getAIAnalysis(){
+  const cat=document.getElementById("tr-category").value;
+  const reg=document.getElementById("tr-region").value;
+  const metric=document.getElementById("tr-metric").value;
+  const aiTextDiv = document.getElementById("ai-text");
+  aiTextDiv.innerHTML = '<div class="spinner" style="width:20px;height:20px;margin:0 10px 0 0;display:inline-block;vertical-align:middle"></div> Generating AI insights...';
+  try{
+    const r=await fetch("/api/trends-llm-analysis",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({category:cat,region:reg,metric:metric,time_period:activePeriod})});
+    const d=await r.json();
+    if(d.success){
+      const analysisText = d.analysis || "No analysis available.";
+      aiTextDiv.innerHTML = analysisText.replace(/\n/g,"<br>");
+    } else {
+      aiTextDiv.innerHTML = "⚠️ Could not generate analysis. Please try again.";
+    }
+  } catch(e){
+    aiTextDiv.innerHTML = "⚠️ Error generating analysis: " + e.message;
+  }
+}
+
+function exportTrends(){window.location.href="/api/export-data?type=sales";}
+function fmt(n){return Number(n||0).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});}
+
+</script>
+</body>
+</html>

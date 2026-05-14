@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data Management - SalesForecast AI</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+:root{--primary:#667eea;--secondary:#764ba2;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--dark:#1f2937;--light:#f9fafb;--gray:#6b7280}
+body{background:#f5f7fa;color:var(--dark)}
+.sidebar{position:fixed;left:0;top:0;height:100vh;width:250px;background:white;box-shadow:2px 0 8px rgba(0,0,0,.08);display:flex;flex-direction:column;z-index:1000}
+.sidebar-header{padding:24px 20px 20px;border-bottom:1px solid #e5e7eb}
+.logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:11px;color:#9ca3af;margin-top:3px}
+.nav-links{padding:12px 0;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;padding:11px 20px;color:var(--gray);text-decoration:none;transition:all .2s;font-size:14px;font-weight:500}
+.nav-item:hover,.nav-item.active{background:linear-gradient(90deg,rgba(102,126,234,.1),rgba(118,75,162,.1));color:var(--primary);border-right:3px solid var(--primary)}
+.nav-item i{margin-right:11px;width:18px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid #e5e7eb}
+.user-badge{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--dark)}
+.role-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase}
+.role-admin{background:rgba(239,68,68,.15);color:#dc2626}
+.role-user{background:rgba(102,126,234,.15);color:var(--primary)}
+.logout-link{display:block;text-align:center;padding:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px}
+.main-content{margin-left:250px;padding:24px;min-height:100vh}
+.top-bar{background:white;border-radius:12px;padding:15px 22px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.top-bar h2{font-size:19px;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 17px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,.35)}
+.btn-success{background:linear-gradient(135deg,#10b981,#34d399)}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#f87171)}
+.btn-outline{background:white;color:var(--primary);border:2px solid var(--primary)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-full{width:100%;justify-content:center;margin-bottom:8px}
+.card{background:white;border-radius:12px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card-title{font-size:16px;font-weight:700}
+.form-group{margin-bottom:15px}
+.form-group label{display:block;margin-bottom:6px;font-weight:600;font-size:13px}
+.form-control{width:100%;padding:9px 13px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;background:white;transition:border-color .2s}
+.form-control:focus{outline:none;border-color:var(--primary)}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:22px}
+.stat-card{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:16px;transition:transform .2s}
+.stat-card:hover{transform:translateY(-3px)}
+.stat-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.si-blue{background:linear-gradient(135deg,#667eea,#764ba2);color:white}
+.si-green{background:linear-gradient(135deg,#10b981,#34d399);color:white}
+.si-orange{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:white}
+.si-purple{background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:white}
+.si-red{background:linear-gradient(135deg,#ef4444,#f87171);color:white}
+.stat-label{font-size:12px;color:var(--gray);font-weight:500}
+.stat-value{font-size:24px;font-weight:800;line-height:1.1}
+.stat-sub{font-size:11px;font-weight:600;margin-top:3px}
+.positive{color:var(--success)}.negative{color:var(--danger)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:#f8f9fa;padding:10px 13px;text-align:left;font-weight:700;color:var(--gray);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e5e7eb}
+td{padding:11px 13px;border-bottom:1px solid #f3f4f6;font-size:13px;color:var(--dark)}
+tr:hover td{background:#fafafa}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-success{background:rgba(16,185,129,.15);color:#059669}
+.badge-warning{background:rgba(245,158,11,.15);color:#d97706}
+.badge-danger{background:rgba(239,68,68,.15);color:#dc2626}
+.badge-info{background:rgba(102,126,234,.15);color:var(--primary)}
+.msg-box{padding:13px 16px;border-radius:8px;margin-bottom:14px;display:none;font-size:13px}
+.msg-success{background:#d1fae5;color:#065f46;border-left:4px solid #10b981}
+.msg-error{background:#fee2e2;color:#991b1b;border-left:4px solid #ef4444}
+.msg-warning{background:#fffbeb;color:#92400e;border-left:4px solid #f59e0b}
+.spinner{width:36px;height:36px;border:4px solid #e5e7eb;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-box{text-align:center;padding:40px;color:var(--gray)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray)}
+.empty-state i{font-size:44px;margin-bottom:14px;display:block;opacity:.3}
+.admin-gate{display:none!important}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}}
+
+.dm-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+@media(max-width:900px){.dm-grid{grid-template-columns:1fr}}
+.upload-area{border:2px dashed #d1d5db;border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa}
+.upload-area:hover,.upload-area.drag{border-color:var(--primary);background:rgba(102,126,234,.05)}
+.upload-area i{font-size:36px;color:var(--gray);margin-bottom:10px;display:block}
+.upload-area h4{font-size:15px;font-weight:700;margin-bottom:6px}
+.upload-area p{font-size:13px;color:var(--gray)}
+.filters-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end}
+.filters-bar .form-group{margin-bottom:0;min-width:140px}
+.pagination{display:flex;align-items:center;gap:8px;margin-top:14px}
+.page-btn{padding:6px 12px;border:1px solid #e5e7eb;border-radius:6px;background:white;cursor:pointer;font-size:13px;transition:all .2s}
+.page-btn:hover,.page-btn.active{background:var(--primary);color:white;border-color:var(--primary)}
+.del-btn{background:none;border:none;color:var(--danger);cursor:pointer;padding:4px 8px;font-size:13px;border-radius:4px}
+.del-btn:hover{background:rgba(239,68,68,.1)}
+.import-log{background:#1f2937;color:#d1fae5;padding:14px;border-radius:8px;font-family:monospace;font-size:12px;max-height:160px;overflow-y:auto;white-space:pre-wrap;margin-top:12px;display:none}
+
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header"><div class="logo">SalesForecast AI</div><div class="logo-sub">LSTM · Deep Learning</div></div>
+  <div class="nav-links"><a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+<a href="/data-management" class="nav-item active"><i class="fas fa-database"></i><span>Data Management</span></a>
+<a href="/forecast" class="nav-item"><i class="fas fa-bullseye"></i><span>Generate Forecast</span></a>
+<a href="/trends-analysis" class="nav-item"><i class="fas fa-chart-bar"></i><span>Trends Analysis</span></a>
+<a href="/reports" class="nav-item"><i class="fas fa-file-export"></i><span>Reports</span></a>
+<a href="/anomalies" class="nav-item"><i class="fas fa-exclamation-triangle"></i><span>Anomalies</span></a>
+<a href="/what-if" class="nav-item"><i class="fas fa-sliders-h"></i><span>What-If Analysis</span></a>
+<a href="/model-training" class="nav-item admin-gate"><i class="fas fa-brain"></i><span>Model Training</span></a>
+<a href="/admin/users" class="nav-item admin-gate"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+</div>
+  <div class="sidebar-footer">
+    <div class="user-badge"><div class="user-avatar" id="nav-avatar">?</div>
+      <div><div class="user-name" id="nav-username">...</div><div style="margin-top:2px"><span class="role-badge" id="nav-role-badge">...</span></div></div></div>
+    <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+<div class="main-content">
+
+  <div class="top-bar">
+    <h2><i class="fas fa-database" style="color:var(--primary);margin-right:10px"></i>Data Management</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm btn-outline" onclick="exportData()"><i class="fas fa-download"></i>Export CSV</button>
+      <button class="btn btn-sm" onclick="showAddForm()"><i class="fas fa-plus"></i>Add Record</button>
+    </div>
+  </div>
+  <div id="msg-success" class="msg-box msg-success"></div>
+  <div id="msg-error" class="msg-box msg-error"></div>
+
+  <div class="dm-grid">
+    <!-- Upload -->
+    <div class="card">
+      <div class="card-header"><span class="card-title"><i class="fas fa-upload" style="color:var(--primary);margin-right:8px"></i>Upload CSV</span></div>
+      <div class="upload-area" id="upload-area" onclick="document.getElementById('csv-file').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="event.preventDefault();this.classList.remove('drag');handleDrop(event)">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h4>Click or drag & drop CSV file</h4>
+        <p>Required columns: date, product_category, region, units_sold, unit_price</p>
+        <p style="margin-top:6px;font-size:11px;color:#9ca3af">Optional: promotion_flag, holiday_flag, discount_percent, stock_level</p>
+      </div>
+      <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="uploadCSV(this.files[0])">
+      <button class="btn btn-full" style="margin-top:12px" onclick="document.getElementById('csv-file').click()">
+        <i class="fas fa-file-csv"></i>Choose CSV File
+      </button>
+      <div id="upload-progress" style="display:none;margin-top:12px">
+        <div style="background:#e5e7eb;border-radius:4px;height:6px"><div id="upload-bar" style="background:var(--primary);height:6px;width:0%;border-radius:4px;transition:width .3s"></div></div>
+        <p style="font-size:12px;color:var(--gray);margin-top:6px;text-align:center" id="upload-status">Uploading...</p>
+      </div>
+      <div class="import-log" id="import-log"></div>
+      <div style="margin-top:14px">
+        <p style="font-size:12px;color:var(--gray);margin-bottom:8px"><i class="fas fa-info-circle"></i> CSV template:</p>
+        <button class="btn btn-sm btn-outline" onclick="downloadTemplate()"><i class="fas fa-download"></i>Download Template</button>
+      </div>
+    </div>
+
+    <!-- Add Record -->
+    <div class="card" id="add-record-card" style="display:none">
+      <div class="card-header"><span class="card-title">Add Single Record</span><button class="btn btn-sm btn-danger" onclick="hideAddForm()"><i class="fas fa-times"></i></button></div>
+      <div class="form-row">
+        <div class="form-group"><label>Date</label><input type="date" id="ar-date" class="form-control" value=""></div>
+        <div class="form-group"><label>Category</label><select id="ar-category" class="form-control"><option value="">Select...</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Region</label><select id="ar-region" class="form-control"><option value="">Select...</option></select></div>
+        <div class="form-group"><label>Units Sold</label><input type="number" id="ar-units" class="form-control" min="1" value="1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Unit Price ($)</label><input type="number" id="ar-price" class="form-control" min="0.01" step="0.01" value="10.00"></div>
+        <div class="form-group"><label>Discount %</label><input type="number" id="ar-discount" class="form-control" min="0" max="100" value="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="ar-promo"> Promotion Active</label></div>
+        <div class="form-group"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="ar-holiday"> Holiday Period</label></div>
+      </div>
+      <button class="btn btn-success btn-full" onclick="addRecord()"><i class="fas fa-save"></i>Save Record</button>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="card" id="data-summary-card">
+      <div class="card-header"><span class="card-title">Data Summary</span><button class="btn btn-sm btn-outline" onclick="loadSummary()"><i class="fas fa-sync"></i></button></div>
+      <div id="data-summary"><div class="loading-box"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Sales Records</span>
+      <span id="record-count" style="font-size:13px;color:var(--gray)"></span>
+    </div>
+    <div class="filters-bar">
+      <div class="form-group"><label>Category</label><select id="f-category" class="form-control" onchange="loadTable(1)"><option value="">All</option></select></div>
+      <div class="form-group"><label>Region</label><select id="f-region" class="form-control" onchange="loadTable(1)"><option value="">All</option></select></div>
+      <div class="form-group"><label>From</label><input type="date" id="f-from" class="form-control" onchange="loadTable(1)"></div>
+      <div class="form-group"><label>To</label><input type="date" id="f-to" class="form-control" onchange="loadTable(1)"></div>
+      <button class="btn btn-sm btn-outline" onclick="clearFilters()"><i class="fas fa-times"></i>Clear</button>
+    </div>
+    <div id="data-table"><div class="loading-box"><div class="spinner"></div></div></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+<script>
+(async function(){
+  try{
+    const r=await fetch("/api/user-info");const u=await r.json();
+    const name=u.username||"User";const role=u.role||"user";
+    document.getElementById("nav-avatar").textContent=name[0].toUpperCase();
+    document.getElementById("nav-username").textContent=name;
+    const rb=document.getElementById("nav-role-badge");rb.textContent=role;rb.className="role-badge role-"+role;
+    if(role==="admin"){document.querySelectorAll(".admin-gate").forEach(function(el){el.style.setProperty("display","flex","important");});}
+    window._userRole=role;window._userName=name;
+    document.dispatchEvent(new CustomEvent("userLoaded",{detail:{role:role,name:name}}));
+  }catch(e){console.error("nav",e);}
+})();
+</script>
+<script>
+
+let currentPage=1;const PAGE_SIZE=50;
+const VALID_CATEGORIES=["Grocery (Dry & Canned Goods)","Produce (Fruits & Vegetables)","Dairy & Eggs","Meat & Seafood","Frozen Foods","Bakery","Beverages","Deli & Prepared Foods","Household & Cleaning","Health, Beauty & Personal Care","General Merchandise / Non-Food","Specialty & Wellness","Floral","Others"];
+const VALID_REGIONS=["North","South","East","West","Central","Northeast","Northwest","Southeast","Southwest"];
+
+document.addEventListener("DOMContentLoaded",async function(){
+  const today=new Date().toISOString().split("T")[0];
+  document.getElementById("ar-date").value=today;
+  const monthAgo=new Date(Date.now()-30*864e5).toISOString().split("T")[0];
+  document.getElementById("f-from").value=monthAgo;
+  document.getElementById("f-to").value=today;
+  await loadDropdowns();
+  loadTable(1);
+  loadSummary();
+});
+
+async function loadDropdowns(){
+  try{
+    const r=await fetch("/api/categories-regions");
+    const d=await r.json();
+    const cats=d.categories&&d.categories.length?d.categories:VALID_CATEGORIES;
+    const regs=d.regions&&d.regions.length?d.regions:VALID_REGIONS;
+    ["f-category","ar-category"].forEach(function(id){
+      const sel=document.getElementById(id);
+      if(!sel)return;
+      const firstOpt=sel.options[0];sel.innerHTML="";
+      if(firstOpt)sel.appendChild(firstOpt);
+      cats.forEach(function(c){const o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o);});
+    });
+    ["f-region","ar-region"].forEach(function(id){
+      const sel=document.getElementById(id);
+      if(!sel)return;
+      const firstOpt=sel.options[0];sel.innerHTML="";
+      if(firstOpt)sel.appendChild(firstOpt);
+      regs.forEach(function(r){const o=document.createElement("option");o.value=r;o.textContent=r;sel.appendChild(o);});
+    });
+  }catch(e){console.error(e);}
+}
+
+async function loadTable(pg){
+  currentPage=pg;
+  const cat=document.getElementById("f-category").value;
+  const reg=document.getElementById("f-region").value;
+  const from=document.getElementById("f-from").value;
+  const to=document.getElementById("f-to").value;
+  
+  // Build URL for data
+  let dataUrl="/api/sales-data?limit="+PAGE_SIZE+"&offset="+((pg-1)*PAGE_SIZE);
+  if(cat)dataUrl+="&category="+encodeURIComponent(cat);
+  if(reg)dataUrl+="&region="+encodeURIComponent(reg);
+  if(from)dataUrl+="&start_date="+from;
+  if(to)dataUrl+="&end_date="+to;
+  
+  // Build URL for total count
+  let countUrl="/api/sales-count";
+  let firstParam=true;
+  if(cat){countUrl+="?category="+encodeURIComponent(cat);firstParam=false;}
+  if(reg){countUrl+=(firstParam?"?":"&")+"region="+encodeURIComponent(reg);firstParam=false;}
+  if(from){countUrl+=(firstParam?"?":"&")+"start_date="+from;firstParam=false;}
+  if(to){countUrl+=(firstParam?"?":"&")+"end_date="+to;}
+  
+  try{
+    // Fetch both data and count in parallel
+    const [dataResponse, countResponse] = await Promise.all([
+      fetch(dataUrl),
+      fetch(countUrl)
+    ]);
+    const data = await dataResponse.json();
+    const countData = await countResponse.json();
+    const totalRecords = countData.count || 0;
+    
+    renderTable(data, totalRecords);
+  }catch(e){console.error(e);}
+}
+
+function renderTable(rows, totalRecords){
+  const el=document.getElementById("data-table");
+  if(!rows.length){el.innerHTML='<div class="empty-state"><i class="fas fa-inbox"></i><p>No records found. Upload a CSV or add records manually.</p></div>';document.getElementById("pagination").innerHTML="";document.getElementById("record-count").textContent="0 records";return;}
+  
+  const startRecord = ((currentPage-1)*PAGE_SIZE)+1;
+  const endRecord = Math.min(startRecord + rows.length - 1, totalRecords);
+  document.getElementById("record-count").textContent=startRecord+"-"+endRecord+" of "+totalRecords+" records";
+  
+  let html='<div class="table-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Region</th><th>Units</th><th>Unit Price</th><th>Total Sales</th><th>Promo</th><th>Holiday</th><th>Action</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    html+="<tr><td>"+r.date+"</td><td>"+r.product_category+"</td><td>"+r.region+"</td><td>"+(r.units_sold||0).toLocaleString()+"</td><td>$"+fmt(r.unit_price)+"</td><td>$"+fmt(r.total_sales)+"</td>"+
+      "<td>"+(r.promotion_flag?'<span class="badge badge-success">Yes</span>':'<span class="badge">No</span>')+"</td>"+
+      "<td>"+(r.holiday_flag?'<span class="badge badge-warning">Yes</span>':'<span class="badge">No</span>')+"</td>"+
+      "<td><button class='del-btn' onclick='delRecord("+r.id+")'><i class='fas fa-trash'></i></button></td></tr>";
+  });
+  html+="</tbody></table></div>";
+  el.innerHTML=html;
+  renderPagination(totalRecords);
+}
+
+function renderPagination(totalRecords){
+  const pg=document.getElementById("pagination");
+  const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
+  
+  // Don't show pagination if only one page or no records
+  if(totalPages <= 1){
+    pg.innerHTML = '<span style="font-size:13px;color:var(--gray)">Showing all records</span>';
+    return;
+  }
+  
+  let html = '<button class="page-btn" onclick="loadTable('+(currentPage-1)+')" '+(currentPage<=1?"disabled":"")+'>← Prev</button>';
+  
+  // Show page numbers (simplified: show first, current-1, current, current+1, last)
+  if(totalPages <= 7){
+    for(let i=1; i<=totalPages; i++){
+      html += '<button class="page-btn '+(i===currentPage?'active':'')+'" onclick="loadTable('+i+')">'+i+'</button>';
+    }
+  } else {
+    // Always show first page
+    html += '<button class="page-btn '+(1===currentPage?'active':'')+'" onclick="loadTable(1)">1</button>';
+    if(currentPage > 3) html += '<span style="padding:0 6px;">...</span>';
+    
+    // Show pages around current
+    let startPage = Math.max(2, currentPage-1);
+    let endPage = Math.min(totalPages-1, currentPage+1);
+    for(let i=startPage; i<=endPage; i++){
+      html += '<button class="page-btn '+(i===currentPage?'active':'')+'" onclick="loadTable('+i+')">'+i+'</button>';
+    }
+    
+    if(currentPage < totalPages-2) html += '<span style="padding:0 6px;">...</span>';
+    // Always show last page
+    html += '<button class="page-btn '+(totalPages===currentPage?'active':'')+'" onclick="loadTable('+totalPages+')">'+totalPages+'</button>';
+  }
+  
+  html += '<button class="page-btn" onclick="loadTable('+(currentPage+1)+')" '+(currentPage>=totalPages?"disabled":"")+'>Next →</button>';
+  pg.innerHTML=html;
+}
+
+async function delRecord(id){
+  if(!confirm("Delete this record?"))return;
+  try{
+    const r=await fetch("/api/delete-sales/"+id,{method:"DELETE"});
+    const d=await r.json();
+    if(d.success){showMsg("success","Record deleted.");loadTable(currentPage);loadSummary();}
+    else showMsg("error",d.message);
+  }catch(e){showMsg("error","Error: "+e.message);}
+}
+
+async function uploadCSV(file){
+  if(!file)return;
+  if(!file.name.endsWith(".csv")){showMsg("error","Please upload a CSV file.");return;}
+  const prog=document.getElementById("upload-progress");
+  const bar=document.getElementById("upload-bar");
+  const status=document.getElementById("upload-status");
+  const log=document.getElementById("import-log");
+  prog.style.display="block";bar.style.width="10%";status.textContent="Uploading...";log.style.display="none";
+  const fd=new FormData();fd.append("file",file);
+  try{
+    bar.style.width="40%";status.textContent="Processing...";
+    const r=await fetch("/api/upload-sales",{method:"POST",body:fd});
+    bar.style.width="80%";
+    const d=await r.json();
+    bar.style.width="100%";
+    if(d.success){
+      showMsg("success",d.message);
+      let logText="=== Import Report ===\n";
+      logText+="✅ Inserted: "+d.success_count+" records\n";
+      if(d.warning_count)logText+="⚠️  Mapped categories: "+d.warning_count+"\n";
+      if(d.error_count)logText+="❌ Errors: "+d.error_count+"\n";
+      if(d.errors&&d.errors.length){logText+="\nErrors:\n";d.errors.forEach(function(e){logText+="  "+e+"\n";});}
+      if(d.warnings&&d.warnings.length){logText+="\nCategory mappings:\n";d.warnings.slice(0,10).forEach(function(w){logText+="  "+w+"\n";});}
+      log.textContent=logText;log.style.display="block";
+      loadTable(1);loadSummary();loadDropdowns();
+    } else {
+      showMsg("error",d.message||"Upload failed.");
+      log.textContent="Error: "+(d.message||"Unknown error");log.style.display="block";
+    }
+  }catch(e){showMsg("error","Upload error: "+e.message);}
+  finally{setTimeout(function(){prog.style.display="none";bar.style.width="0%";},2000);}
+}
+
+function handleDrop(ev){
+  const file=ev.dataTransfer.files[0];
+  if(file)uploadCSV(file);
+}
+
+async function addRecord(){
+  const date=document.getElementById("ar-date").value;
+  const cat=document.getElementById("ar-category").value;
+  const reg=document.getElementById("ar-region").value;
+  const units=parseInt(document.getElementById("ar-units").value)||0;
+  const price=parseFloat(document.getElementById("ar-price").value)||0;
+  if(!date||!cat||!reg||units<1||price<=0){showMsg("error","Please fill all required fields correctly.");return;}
+  try{
+    const r=await fetch("/api/add-sales-record",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({date:date,category:cat,region:reg,units:units,price:price,
+        discount:parseFloat(document.getElementById("ar-discount").value)||0,
+        promotion:document.getElementById("ar-promo").checked?1:0,
+        holiday:document.getElementById("ar-holiday").checked?1:0})});
+    const d=await r.json();
+    if(d.success){showMsg("success","Record added successfully!");loadTable(1);loadSummary();hideAddForm();}
+    else showMsg("error",d.message);
+  }catch(e){showMsg("error","Error: "+e.message);}
+}
+
+async function loadSummary(){
+  try{
+    const d=await fetch("/api/dashboard-stats").then(r=>r.json());
+    const s=d.stats||{};
+    document.getElementById("data-summary").innerHTML=
+      '<div class="stats-grid" style="grid-template-columns:repeat(2,1fr);gap:10px">'+
+      miniStat("Total Sales","$"+fmt(s.total_sales),"si-blue")+
+      miniStat("Units Sold",(s.total_units||0).toLocaleString(),"si-orange")+
+      miniStat("Avg Daily","$"+fmt(s.avg_daily_sales),"si-green")+
+      miniStat("Categories",(d.categories||[]).length,"si-purple")+
+      "</div>";
+  }catch(e){}
+}
+
+function miniStat(label,val,ic){
+  return '<div class="stat-card"><div class="stat-icon '+ic+'"></div><div><div class="stat-label">'+label+'</div><div class="stat-value" style="font-size:18px">'+val+'</div></div></div>';
+}
+
+function showAddForm(){
+  document.getElementById("add-record-card").style.display="block";
+  document.getElementById("data-summary-card").style.display="none";
+}
+function hideAddForm(){
+  document.getElementById("add-record-card").style.display="none";
+  document.getElementById("data-summary-card").style.display="block";
+}
+function clearFilters(){
+  ["f-category","f-region"].forEach(function(id){document.getElementById(id).value="";});
+  const today=new Date().toISOString().split("T")[0];
+  const monthAgo=new Date(Date.now()-30*864e5).toISOString().split("T")[0];
+  document.getElementById("f-from").value=monthAgo;
+  document.getElementById("f-to").value=today;
+  loadTable(1);
+}
+function exportData(){window.location.href="/api/export-data?type=sales";}
+function downloadTemplate(){
+  const csv="date,product_category,region,units_sold,unit_price,promotion_flag,holiday_flag,discount_percent,stock_level\n2024-01-15,Beverages,North,50,12.99,0,0,0,100\n2024-01-16,Bakery,South,30,8.50,1,0,10,80\n";
+  const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="sales_template.csv";a.click();
+}
+function fmt(n){return Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function showMsg(type,msg){const el=document.getElementById("msg-"+type);el.textContent=msg;el.style.display="block";setTimeout(function(){el.style.display="none";},6000);}
+
+</script>
+</body>
+</html>

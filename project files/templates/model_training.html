@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Model Training - SalesForecast AI</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+:root{--primary:#667eea;--secondary:#764ba2;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--dark:#1f2937;--light:#f9fafb;--gray:#6b7280}
+body{background:#f5f7fa;color:var(--dark)}
+.sidebar{position:fixed;left:0;top:0;height:100vh;width:250px;background:white;box-shadow:2px 0 8px rgba(0,0,0,.08);display:flex;flex-direction:column;z-index:1000}
+.sidebar-header{padding:24px 20px 20px;border-bottom:1px solid #e5e7eb}
+.logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:11px;color:#9ca3af;margin-top:3px}
+.nav-links{padding:12px 0;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;padding:11px 20px;color:var(--gray);text-decoration:none;transition:all .2s;font-size:14px;font-weight:500}
+.nav-item:hover,.nav-item.active{background:linear-gradient(90deg,rgba(102,126,234,.1),rgba(118,75,162,.1));color:var(--primary);border-right:3px solid var(--primary)}
+.nav-item i{margin-right:11px;width:18px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid #e5e7eb}
+.user-badge{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--dark)}
+.role-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase}
+.role-admin{background:rgba(239,68,68,.15);color:#dc2626}
+.role-user{background:rgba(102,126,234,.15);color:var(--primary)}
+.logout-link{display:block;text-align:center;padding:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px}
+.main-content{margin-left:250px;padding:24px;min-height:100vh}
+.top-bar{background:white;border-radius:12px;padding:15px 22px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.top-bar h2{font-size:19px;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 17px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,.35)}
+.btn-success{background:linear-gradient(135deg,#10b981,#34d399)}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#f87171)}
+.btn-outline{background:white;color:var(--primary);border:2px solid var(--primary)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-full{width:100%;justify-content:center;margin-bottom:8px}
+.card{background:white;border-radius:12px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card-title{font-size:16px;font-weight:700}
+.form-group{margin-bottom:15px}
+.form-group label{display:block;margin-bottom:6px;font-weight:600;font-size:13px}
+.form-control{width:100%;padding:9px 13px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;background:white;transition:border-color .2s}
+.form-control:focus{outline:none;border-color:var(--primary)}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:22px}
+.stat-card{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:16px;transition:transform .2s}
+.stat-card:hover{transform:translateY(-3px)}
+.stat-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.si-blue{background:linear-gradient(135deg,#667eea,#764ba2);color:white}
+.si-green{background:linear-gradient(135deg,#10b981,#34d399);color:white}
+.si-orange{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:white}
+.si-purple{background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:white}
+.si-red{background:linear-gradient(135deg,#ef4444,#f87171);color:white}
+.stat-label{font-size:12px;color:var(--gray);font-weight:500}
+.stat-value{font-size:24px;font-weight:800;line-height:1.1}
+.stat-sub{font-size:11px;font-weight:600;margin-top:3px}
+.positive{color:var(--success)}.negative{color:var(--danger)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:#f8f9fa;padding:10px 13px;text-align:left;font-weight:700;color:var(--gray);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e5e7eb}
+td{padding:11px 13px;border-bottom:1px solid #f3f4f6;font-size:13px;color:var(--dark)}
+tr:hover td{background:#fafafa}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-success{background:rgba(16,185,129,.15);color:#059669}
+.badge-warning{background:rgba(245,158,11,.15);color:#d97706}
+.badge-danger{background:rgba(239,68,68,.15);color:#dc2626}
+.badge-info{background:rgba(102,126,234,.15);color:var(--primary)}
+.msg-box{padding:13px 16px;border-radius:8px;margin-bottom:14px;display:none;font-size:13px}
+.msg-success{background:#d1fae5;color:#065f46;border-left:4px solid #10b981}
+.msg-error{background:#fee2e2;color:#991b1b;border-left:4px solid #ef4444}
+.msg-warning{background:#fffbeb;color:#92400e;border-left:4px solid #f59e0b}
+.spinner{width:36px;height:36px;border:4px solid #e5e7eb;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-box{text-align:center;padding:40px;color:var(--gray)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray)}
+.empty-state i{font-size:44px;margin-bottom:14px;display:block;opacity:.3}
+.admin-gate{display:none!important}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}}
+
+.mt-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+@media(max-width:900px){.mt-grid{grid-template-columns:1fr}}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+.metric-box{background:var(--light);border-radius:10px;padding:14px;text-align:center}
+.metric-val{font-size:22px;font-weight:800}
+.metric-val.good{color:var(--success)}.metric-val.fair{color:var(--warning)}.metric-val.poor{color:var(--danger)}
+.metric-label{font-size:11px;color:var(--gray);margin-top:3px}
+.log-box{background:#111827;color:#d1fae5;padding:14px;border-radius:8px;font-family:monospace;font-size:12px;height:160px;overflow-y:auto;white-space:pre-wrap}
+.model-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6}
+.model-item:last-child{border-bottom:none}
+.access-denied{text-align:center;padding:80px 20px}
+.access-denied i{font-size:60px;color:var(--danger);margin-bottom:20px;display:block;opacity:.6}
+
+</style>
+</head>
+<body>
+<div class="sidebar"><div class="sidebar-header"><div class="logo">SalesForecast AI</div><div class="logo-sub">LSTM · Deep Learning</div></div>
+  <div class="nav-links"><a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+<a href="/data-management" class="nav-item"><i class="fas fa-database"></i><span>Data Management</span></a>
+<a href="/forecast" class="nav-item"><i class="fas fa-bullseye"></i><span>Generate Forecast</span></a>
+<a href="/trends-analysis" class="nav-item"><i class="fas fa-chart-bar"></i><span>Trends Analysis</span></a>
+<a href="/reports" class="nav-item"><i class="fas fa-file-export"></i><span>Reports</span></a>
+<a href="/anomalies" class="nav-item"><i class="fas fa-exclamation-triangle"></i><span>Anomalies</span></a>
+<a href="/what-if" class="nav-item"><i class="fas fa-sliders-h"></i><span>What-If Analysis</span></a>
+<a href="/model-training" class="nav-item admin-gate"><i class="fas fa-brain"></i><span>Model Training</span></a>
+<a href="/admin/users" class="nav-item admin-gate"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+</div>
+  <div class="sidebar-footer"><div class="user-badge"><div class="user-avatar" id="nav-avatar">?</div>
+      <div><div class="user-name" id="nav-username">...</div><div style="margin-top:2px"><span class="role-badge" id="nav-role-badge">...</span></div></div></div>
+    <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></div></div>
+<div class="main-content">
+
+  <div class="top-bar">
+    <h2><i class="fas fa-brain" style="color:var(--primary);margin-right:10px"></i>Model Training</h2>
+    <span class="badge badge-danger" id="admin-badge" style="display:none">Admin Only</span>
+  </div>
+
+  <!-- Access denied message for non-admins -->
+  <div id="access-denied-box" style="display:none" class="card">
+    <div class="access-denied">
+      <i class="fas fa-lock"></i>
+      <h2 style="margin-bottom:10px">Admin Access Required</h2>
+      <p style="color:var(--gray)">Model training is restricted to administrators. Contact your admin to train or retrain models.</p>
+      <a href="/dashboard" class="btn" style="margin-top:20px"><i class="fas fa-home"></i>Back to Dashboard</a>
+    </div>
+  </div>
+
+  <!-- Main content (admin only) -->
+  <div id="admin-content" style="display:none">
+    <div id="msg-success" class="msg-box msg-success"></div>
+    <div id="msg-error" class="msg-box msg-error"></div>
+
+    <div class="mt-grid">
+      <!-- Single Model Training -->
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="fas fa-microchip" style="color:var(--primary);margin-right:8px"></i>Single Model Training</span></div>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:16px">Select a category/region combination and train a dedicated LSTM model for it.</p>
+        <div class="form-group">
+          <label>Product Category</label>
+          <select id="mt-category" class="form-control"><option value="">-- Select Category --</option></select>
+        </div>
+        <div class="form-group">
+          <label>Region</label>
+          <select id="mt-region" class="form-control"><option value="">-- Select Region --</option></select>
+        </div>
+        <div class="form-group">
+          <label>Model Type</label>
+          <select id="mt-model-type" class="form-control">
+            <option value="lstm">LSTM (Deep Learning) — Best accuracy</option>
+            <option value="arima">ARIMA — Classical time series</option>
+            <option value="exponential_smoothing">Exponential Smoothing — Seasonal patterns</option>
+          </select>
+        </div>
+        <div id="mt-loading" class="loading-box" style="display:none"><div class="spinner"></div><p>Training model... this may take a few minutes</p></div>
+        <button class="btn btn-full" onclick="trainSingle()"><i class="fas fa-play"></i>Train Selected Model</button>
+      </div>
+
+      <!-- Batch Training -->
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="fas fa-layer-group" style="color:var(--warning);margin-right:8px"></i>Batch Training</span></div>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:16px">Train models for all category/region combinations that have sufficient data (10+ records).</p>
+        <div class="form-group">
+          <label>Minimum records required</label>
+          <input type="number" id="mt-min-data" class="form-control" min="10" value="10">
+        </div>
+        <div id="mt-batch-loading" class="loading-box" style="display:none"><div class="spinner"></div><p id="mt-batch-status">Training all models...</p></div>
+        <button class="btn btn-warning btn-full" onclick="trainAll()"><i class="fas fa-play-circle"></i>Train All Models</button>
+        <button class="btn btn-danger btn-full" onclick="retrainAll()" style="margin-top:0"><i class="fas fa-sync-alt"></i>Retrain All (Force)</button>
+      </div>
+    </div>
+
+    <!-- Metrics + Log -->
+    <div class="mt-grid">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Model Performance</span><button class="btn btn-sm btn-outline" onclick="loadMetrics()"><i class="fas fa-sync"></i></button></div>
+        <div id="metrics-area"><div class="loading-box"><div class="spinner"></div></div></div>
+        <div id="metrics-chart" style="height:240px;margin-top:10px;display:none"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Training Log</span><button class="btn btn-sm btn-outline" onclick="clearLog()"><i class="fas fa-trash"></i></button></div>
+        <div class="log-box" id="training-log">[System] Ready. Select a model and click Train.</div>
+        <div class="card-header" style="margin-top:16px;margin-bottom:0"><span class="card-title" style="font-size:14px">Trained Models</span></div>
+        <div id="trained-models" style="margin-top:10px"><div class="loading-box"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>(async function(){try{const r=await fetch("/api/user-info");const u=await r.json();const name=u.username||"User";const role=u.role||"user";document.getElementById("nav-avatar").textContent=name[0].toUpperCase();document.getElementById("nav-username").textContent=name;const rb=document.getElementById("nav-role-badge");rb.textContent=role;rb.className="role-badge role-"+role;if(role==="admin"){document.querySelectorAll(".admin-gate").forEach(function(el){el.style.setProperty("display","flex","important");});}window._userRole=role;window._userName=name;document.dispatchEvent(new CustomEvent("userLoaded",{detail:{role:role,name:name}}));}catch(e){console.error("nav",e);}})();</script>
+<script>
+
+document.addEventListener("userLoaded",function(e){
+  const role=e.detail.role;
+  if(role==="admin"){
+    document.getElementById("admin-content").style.display="block";
+    document.getElementById("admin-badge").style.display="inline-block";
+    loadDropdowns();loadMetrics();loadTrainedModels();
+  } else {
+    document.getElementById("access-denied-box").style.display="block";
+  }
+});
+document.addEventListener("DOMContentLoaded",function(){
+  // fallback if userLoaded fires before we register
+  setTimeout(function(){
+    if(window._userRole&&document.getElementById("admin-content").style.display==="none"&&document.getElementById("access-denied-box").style.display==="none"){
+      if(window._userRole==="admin"){document.getElementById("admin-content").style.display="block";document.getElementById("admin-badge").style.display="inline-block";loadDropdowns();loadMetrics();loadTrainedModels();}
+      else document.getElementById("access-denied-box").style.display="block";
+    }
+  },800);
+});
+
+async function loadDropdowns(){
+  try{
+    const r=await fetch("/api/categories-regions");const d=await r.json();
+    ["mt-category"].forEach(function(id){
+      const sel=document.getElementById(id);sel.innerHTML='<option value="">-- Select Category --</option>';
+      (d.categories||[]).forEach(function(c){const o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o);});
+    });
+    ["mt-region"].forEach(function(id){
+      const sel=document.getElementById(id);sel.innerHTML='<option value="">-- Select Region --</option>';
+      (d.regions||[]).forEach(function(r){const o=document.createElement("option");o.value=r;o.textContent=r;sel.appendChild(o);});
+    });
+  }catch(e){console.error(e);}
+}
+
+async function trainSingle(){
+  const cat=document.getElementById("mt-category").value;
+  const reg=document.getElementById("mt-region").value;
+  if(!cat||!reg){showMsg("error","Please select both category and region.");return;}
+  document.getElementById("mt-loading").style.display="block";
+  addLog("Training "+cat+" / "+reg+" ...");
+  try{
+    const r=await fetch("/api/train-model",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({category:cat,region:reg})});
+    const d=await r.json();
+    document.getElementById("mt-loading").style.display="none";
+    if(d.success){showMsg("success",d.message);addLog("✅ Success: "+cat+" / "+reg);loadMetrics();loadTrainedModels();}
+    else{showMsg("error",d.message);addLog("❌ Failed: "+d.message);}
+  }catch(e){document.getElementById("mt-loading").style.display="none";showMsg("error","Error: "+e.message);addLog("❌ Error: "+e.message);}
+}
+
+async function trainAll(){
+  document.getElementById("mt-batch-loading").style.display="block";
+  document.getElementById("mt-batch-status").textContent="Training all models... this may take several minutes.";
+  addLog("Starting batch training...");
+  try{
+    const r=await fetch("/api/bulk-train",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({})});
+    const d=await r.json();
+    document.getElementById("mt-batch-loading").style.display="none";
+    if(d.success){showMsg("success",d.message);addLog("✅ Batch complete: "+d.message);loadMetrics();loadTrainedModels();}
+    else{showMsg("error",d.message);addLog("❌ Batch failed: "+d.message);}
+  }catch(e){document.getElementById("mt-batch-loading").style.display="none";addLog("❌ Error: "+e.message);}
+}
+
+function retrainAll(){if(confirm("Force retrain all models? This will overwrite existing models."))trainAll();}
+
+async function loadMetrics(){
+  try{
+    const r=await fetch("/api/model-metrics?limit=10");const metrics=await r.json();
+    const area=document.getElementById("metrics-area");
+    if(!metrics.length){area.innerHTML='<div class="empty-state"><i class="fas fa-chart-bar"></i><p>No models trained yet</p></div>';return;}
+    const latest=metrics[0];
+    area.innerHTML='<div class="metric-grid">'+
+      mbox((latest.mae||0).toFixed(2),"MAE",latest.mae<500?"good":latest.mae<1000?"fair":"poor")+
+      mbox((latest.rmse||0).toFixed(2),"RMSE",latest.rmse<750?"good":latest.rmse<1500?"fair":"poor")+
+      mbox((latest.mape||0).toFixed(1)+"%","MAPE",latest.mape<15?"good":latest.mape<30?"fair":"poor")+
+      mbox((latest.r2_score||0).toFixed(3),"R²",latest.r2_score>0.8?"good":latest.r2_score>0.6?"fair":"poor")+"</div>";
+    if(metrics.length>=2){
+      document.getElementById("metrics-chart").style.display="block";
+      const rev=[...metrics].reverse();
+      Plotly.newPlot("metrics-chart",[
+        {x:rev.map(m=>m.training_date),y:rev.map(m=>m.mae),name:"MAE",type:"scatter",mode:"lines+markers",line:{color:"#ef4444"}},
+        {x:rev.map(m=>m.training_date),y:rev.map(m=>m.rmse),name:"RMSE",type:"scatter",mode:"lines+markers",line:{color:"#f59e0b"}},
+        {x:rev.map(m=>m.training_date),y:rev.map(m=>m.mape),name:"MAPE %",type:"scatter",mode:"lines+markers",line:{color:"#10b981"}}
+      ],{height:240,margin:{l:50,r:10,t:10,b:50},plot_bgcolor:"white",paper_bgcolor:"white",xaxis:{gridcolor:"#f5f5f5"},yaxis:{gridcolor:"#f5f5f5"}},{responsive:true});
+    }
+  }catch(e){console.error(e);}
+}
+
+async function loadTrainedModels(){
+  try{
+    const r=await fetch("/api/model-metrics?limit=10");const metrics=await r.json();
+    const el=document.getElementById("trained-models");
+    if(!metrics.length){el.innerHTML='<p style="color:var(--gray);font-size:13px">No trained models yet</p>';return;}
+    el.innerHTML=metrics.map(function(m){
+      const parts=m.model_name.split("_");
+      return '<div class="model-item"><div><div style="font-size:13px;font-weight:600">'+m.model_name+'</div><div style="font-size:11px;color:var(--gray)">'+m.training_date+'</div></div><span class="badge badge-success">Trained</span></div>';
+    }).join("");
+  }catch(e){}
+}
+
+function mbox(val,label,cls){return '<div class="metric-box"><div class="metric-val '+cls+'">'+val+'</div><div class="metric-label">'+label+'</div></div>';}
+function addLog(msg){const el=document.getElementById("training-log");el.textContent+=(el.textContent?"\n":"")+new Date().toLocaleTimeString()+" "+msg;el.scrollTop=el.scrollHeight;}
+function clearLog(){document.getElementById("training-log").textContent="[System] Log cleared.";}
+function showMsg(type,msg){const el=document.getElementById("msg-"+type);if(!el)return;el.textContent=msg;el.style.display="block";setTimeout(function(){el.style.display="none";},6000);}
+
+</script>
+</body>
+</html>

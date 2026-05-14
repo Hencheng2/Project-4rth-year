@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Sales Forecasting AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .register-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+            overflow: hidden;
+        }
+        
+        .register-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .register-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .register-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .register-form {
+            padding: 40px 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .password-requirements {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .password-requirements ul {
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .password-requirements li {
+            margin-bottom: 3px;
+        }
+        
+        .requirement-met {
+            color: #10b981;
+        }
+        
+        .requirement-not-met {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>Create Account</h1>
+            <p>Join Sales Forecasting AI System</p>
+        </div>
+        
+        <div class="register-form">
+            {% if error %}
+            <div class="error-message" id="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="/register" id="registerForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" 
+                           id="username" 
+                           name="username" 
+                           class="form-control" 
+                           placeholder="Choose a username" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           class="form-control" 
+                           placeholder="Enter your email" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           class="form-control" 
+                           placeholder="Create a password" 
+                           required
+                           oninput="checkPasswordRequirements()">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" 
+                           id="confirm_password" 
+                           name="confirm_password" 
+                           class="form-control" 
+                           placeholder="Confirm your password" 
+                           required
+                           oninput="checkPasswordMatch()">
+                </div>
+                
+                <button type="submit" class="btn">Create Account</button>
+            </form>
+            
+            <div class="login-link">
+                Already have an account? <a href="/login">Login here</a>
+            </div>
+            
+            <div class="password-requirements">
+                <strong>Password Requirements:</strong>
+                <ul>
+                    <li id="req-length" class="requirement-not-met">At least 6 characters</li>
+                    <li id="req-match" class="requirement-not-met">Passwords match</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function checkPasswordRequirements() {
+            const password = document.getElementById('password').value;
+            const lengthReq = document.getElementById('req-length');
+            
+            if (password.length >= 6) {
+                lengthReq.className = 'requirement-met';
+            } else {
+                lengthReq.className = 'requirement-not-met';
+            }
+            
+            checkPasswordMatch();
+        }
+        
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const matchReq = document.getElementById('req-match');
+            
+            if (confirmPassword && password === confirmPassword) {
+                matchReq.className = 'requirement-met';
+            } else {
+                matchReq.className = 'requirement-not-met';
+            }
+        }
+        
+        // Initialize check
+        document.addEventListener('DOMContentLoaded', function() {
+            checkPasswordRequirements();
+            checkPasswordMatch();
+        });
+    </script>
+</body>
+</html>

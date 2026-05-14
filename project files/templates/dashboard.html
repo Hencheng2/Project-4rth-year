@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard - SalesForecast AI</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+:root{--primary:#667eea;--secondary:#764ba2;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--dark:#1f2937;--light:#f9fafb;--gray:#6b7280}
+body{background:#f5f7fa;color:var(--dark)}
+.sidebar{position:fixed;left:0;top:0;height:100vh;width:250px;background:white;box-shadow:2px 0 8px rgba(0,0,0,.08);display:flex;flex-direction:column;z-index:1000}
+.sidebar-header{padding:24px 20px 20px;border-bottom:1px solid #e5e7eb}
+.logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:11px;color:#9ca3af;margin-top:3px}
+.nav-links{padding:12px 0;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;padding:11px 20px;color:var(--gray);text-decoration:none;transition:all .2s;font-size:14px;font-weight:500}
+.nav-item:hover,.nav-item.active{background:linear-gradient(90deg,rgba(102,126,234,.1),rgba(118,75,162,.1));color:var(--primary);border-right:3px solid var(--primary)}
+.nav-item i{margin-right:11px;width:18px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid #e5e7eb}
+.user-badge{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--dark)}
+.role-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase}
+.role-admin{background:rgba(239,68,68,.15);color:#dc2626}
+.role-user{background:rgba(102,126,234,.15);color:var(--primary)}
+.logout-link{display:block;text-align:center;padding:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px}
+.main-content{margin-left:250px;padding:24px;min-height:100vh}
+.top-bar{background:white;border-radius:12px;padding:15px 22px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.top-bar h2{font-size:19px;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 17px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,.35)}
+.btn-success{background:linear-gradient(135deg,#10b981,#34d399)}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#f87171)}
+.btn-outline{background:white;color:var(--primary);border:2px solid var(--primary)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-full{width:100%;justify-content:center;margin-bottom:8px}
+.card{background:white;border-radius:12px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card-title{font-size:16px;font-weight:700}
+.form-group{margin-bottom:15px}
+.form-group label{display:block;margin-bottom:6px;font-weight:600;font-size:13px}
+.form-control{width:100%;padding:9px 13px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;background:white;transition:border-color .2s}
+.form-control:focus{outline:none;border-color:var(--primary)}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:22px}
+.stat-card{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:16px;transition:transform .2s}
+.stat-card:hover{transform:translateY(-3px)}
+.stat-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.si-blue{background:linear-gradient(135deg,#667eea,#764ba2);color:white}
+.si-green{background:linear-gradient(135deg,#10b981,#34d399);color:white}
+.si-orange{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:white}
+.si-purple{background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:white}
+.si-red{background:linear-gradient(135deg,#ef4444,#f87171);color:white}
+.stat-label{font-size:12px;color:var(--gray);font-weight:500}
+.stat-value{font-size:24px;font-weight:800;line-height:1.1}
+.stat-sub{font-size:11px;font-weight:600;margin-top:3px}
+.positive{color:var(--success)}.negative{color:var(--danger)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:#f8f9fa;padding:10px 13px;text-align:left;font-weight:700;color:var(--gray);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e5e7eb}
+td{padding:11px 13px;border-bottom:1px solid #f3f4f6;font-size:13px;color:var(--dark)}
+tr:hover td{background:#fafafa}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-success{background:rgba(16,185,129,.15);color:#059669}
+.badge-warning{background:rgba(245,158,11,.15);color:#d97706}
+.badge-danger{background:rgba(239,68,68,.15);color:#dc2626}
+.badge-info{background:rgba(102,126,234,.15);color:var(--primary)}
+.badge-model-lstm{background:rgba(102,126,234,.15);color:#667eea}
+.badge-model-arima{background:rgba(245,158,11,.15);color:#d97706}
+.badge-model-exp{background:rgba(16,185,129,.15);color:#059669}
+.msg-box{padding:13px 16px;border-radius:8px;margin-bottom:14px;display:none;font-size:13px}
+.msg-success{background:#d1fae5;color:#065f46;border-left:4px solid #10b981}
+.msg-error{background:#fee2e2;color:#991b1b;border-left:4px solid #ef4444}
+.msg-warning{background:#fffbeb;color:#92400e;border-left:4px solid #f59e0b}
+.spinner{width:36px;height:36px;border:4px solid #e5e7eb;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-box{text-align:center;padding:40px;color:var(--gray)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray)}
+.empty-state i{font-size:44px;margin-bottom:14px;display:block;opacity:.3}
+.admin-gate{display:none!important}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}}
+
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:22px}
+.action-tile{background:white;border:none;border-radius:12px;padding:22px 16px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:all .2s;color:var(--dark);width:100%}
+.action-tile:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.action-tile i{font-size:28px;margin-bottom:10px;display:block}
+.action-tile h4{font-size:13px;font-weight:700;margin-bottom:4px}
+.action-tile p{font-size:11px;color:var(--gray)}
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:22px}
+@media(max-width:1100px){.charts-row{grid-template-columns:1fr}}
+
+/* Model tag styles */
+.model-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.model-lstm { background: rgba(102,126,234,0.12); color: #667eea; }
+.model-arima { background: rgba(245,158,11,0.12); color: #d97706; }
+.model-exp { background: rgba(16,185,129,0.12); color: #059669; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header"><div class="logo">SalesForecast AI</div><div class="logo-sub">LSTM · Deep Learning</div></div>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-item active"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+    <a href="/data-management" class="nav-item"><i class="fas fa-database"></i><span>Data Management</span></a>
+    <a href="/forecast" class="nav-item"><i class="fas fa-bullseye"></i><span>Generate Forecast</span></a>
+    <a href="/trends-analysis" class="nav-item"><i class="fas fa-chart-bar"></i><span>Trends Analysis</span></a>
+    <a href="/reports" class="nav-item"><i class="fas fa-file-export"></i><span>Reports</span></a>
+    <a href="/anomalies" class="nav-item"><i class="fas fa-exclamation-triangle"></i><span>Anomalies</span></a>
+    <a href="/what-if" class="nav-item"><i class="fas fa-sliders-h"></i><span>What-If Analysis</span></a>
+    <a href="/model-training" class="nav-item admin-gate"><i class="fas fa-brain"></i><span>Model Training</span></a>
+    <a href="/admin/users" class="nav-item admin-gate"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="user-avatar" id="nav-avatar">?</div>
+      <div><div class="user-name" id="nav-username">...</div><div style="margin-top:2px"><span class="role-badge" id="nav-role-badge">...</span></div></div>
+    </div>
+    <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+<div class="main-content">
+  <div class="top-bar">
+    <h2><i class="fas fa-tachometer-alt" style="color:var(--primary);margin-right:10px"></i>Dashboard</h2>
+    <div style="display:flex;align-items:center;gap:12px">
+      <!-- Currency Switcher -->
+      <div id="currency-switcher" style="display:flex;align-items:center;gap:6px;background:#f1f5f9;border-radius:30px;padding:4px 6px;">
+        <span style="font-size:11px;color:#64748b;font-weight:600;padding:0 4px;">Currency:</span>
+        <button id="btn-usd" onclick="setCurrency('USD',1.0,'$')"
+          style="padding:5px 12px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;background:linear-gradient(135deg,#667eea,#764ba2);color:white;">
+          $ USD
+        </button>
+        <button id="btn-kes" onclick="setCurrency('KES',129.0,'KSh')"
+          style="padding:5px 12px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:#64748b;">
+          KSh KES
+        </button>
+        <input id="custom-rate" type="number" min="0.01" step="0.01"
+          placeholder="Custom rate"
+          title="Set custom KES/USD rate"
+          style="width:90px;padding:5px 8px;border:1px solid #e2e8f0;border-radius:16px;font-size:11px;display:none;"
+          onchange="applyCustomRate(this.value)">
+      </div>
+      <span id="dash-clock" style="font-size:13px;color:var(--gray)"></span>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid"><div class="loading-box"><div class="spinner"></div><p>Loading stats...</p></div></div>
+
+  <div class="quick-grid">
+    <button class="action-tile" onclick="location.href='/forecast'"><i class="fas fa-bullseye" style="color:var(--primary)"></i><h4>Generate Forecast</h4><p>AI-powered prediction</p></button>
+    <button class="action-tile" onclick="location.href='/data-management'"><i class="fas fa-database" style="color:var(--success)"></i><h4>Manage Data</h4><p>Upload & review records</p></button>
+    <button class="action-tile" onclick="location.href='/trends-analysis'"><i class="fas fa-chart-bar" style="color:var(--warning)"></i><h4>Trends Analysis</h4><p>Explore patterns</p></button>
+    <button class="action-tile" onclick="location.href='/reports'"><i class="fas fa-file-export" style="color:#8b5cf6"></i><h4>Reports</h4><p>Download insights</p></button>
+  </div>
+
+  <div class="charts-row">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header"><span class="card-title">Sales Trend – Last 30 Days</span></div>
+      <div id="salesTrendChart" style="height:270px"></div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header"><span class="card-title">Category Split</span></div>
+      <div id="categoryChart" style="height:270px"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px">
+    <div class="card-header">
+      <span class="card-title">Recent Forecasts</span>
+      <a href="/forecast" class="btn btn-sm"><i class="fas fa-plus"></i>New Forecast</a>
+    </div>
+    <div id="predictionsTable"><div class="loading-box"><div class="spinner"></div></div></div>
+  </div>
+</div>
+<script>
+(async function(){
+  try{
+    const r=await fetch('/api/user-info');
+    const u=await r.json();
+    const name=u.username||'User';
+    const role=u.role||'user';
+    document.getElementById('nav-avatar').textContent=name[0].toUpperCase();
+    document.getElementById('nav-username').textContent=name;
+    const rb=document.getElementById('nav-role-badge');
+    rb.textContent=role;
+    rb.className='role-badge role-'+role;
+    if(role==='admin'){
+      document.querySelectorAll('.admin-gate').forEach(function(el){
+        el.style.setProperty('display','flex','important');
+      });
+    }
+    window._userRole=role;
+    window._userName=name;
+    document.dispatchEvent(new CustomEvent('userLoaded',{detail:{role:role,name:name}}));
+  }catch(e){console.error('nav init',e);}
+})();
+</script>
+
+<script>
+// ── Currency state ──────────────────────────────────────────────────────────
+let CURRENCY = { symbol: '$', rate: 1.0, code: 'USD' };
+
+function fmtMoney(n) {
+  const v = Number(n || 0) * CURRENCY.rate;
+  return CURRENCY.symbol + v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+async function setCurrency(code, defaultRate, symbol) {
+  const rate = (code === 'KES')
+    ? (parseFloat(document.getElementById('custom-rate').value) || defaultRate)
+    : defaultRate;
+
+  try {
+    const r = await fetch('/api/currency-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currency: code, rate: rate })
+    });
+    const d = await r.json();
+    if (d.success) {
+      CURRENCY = { symbol: d.symbol, rate: d.rate, code: d.currency };
+    }
+  } catch(e) { CURRENCY = { symbol, rate, code }; }
+
+  // Update button styles
+  document.getElementById('btn-usd').style.background = code === 'USD' ? 'linear-gradient(135deg,#667eea,#764ba2)' : 'transparent';
+  document.getElementById('btn-usd').style.color = code === 'USD' ? 'white' : '#64748b';
+  document.getElementById('btn-kes').style.background = code === 'KES' ? 'linear-gradient(135deg,#10b981,#34d399)' : 'transparent';
+  document.getElementById('btn-kes').style.color = code === 'KES' ? 'white' : '#64748b';
+  document.getElementById('custom-rate').style.display = code === 'KES' ? 'inline-block' : 'none';
+
+  // Re-render dashboard with new currency
+  loadDashboard();
+}
+
+function applyCustomRate(val) {
+  const rate = parseFloat(val);
+  if (rate > 0) setCurrency('KES', rate, 'KSh');
+}
+
+async function loadInitialCurrency() {
+  try {
+    const r = await fetch('/api/currency-settings');
+    const d = await r.json();
+    if (d.success) {
+      CURRENCY = { symbol: d.symbol, rate: d.rate, code: d.currency };
+      if (d.currency === 'KES') {
+        document.getElementById('btn-usd').style.background = 'transparent';
+        document.getElementById('btn-usd').style.color = '#64748b';
+        document.getElementById('btn-kes').style.background = 'linear-gradient(135deg,#10b981,#34d399)';
+        document.getElementById('btn-kes').style.color = 'white';
+        document.getElementById('custom-rate').style.display = 'inline-block';
+        document.getElementById('custom-rate').value = d.rate;
+      }
+    }
+  } catch(e) {}
+}
+// ───────────────────────────────────────────────────────────────────────────
+
+document.addEventListener("DOMContentLoaded", async function(){
+  setInterval(function(){document.getElementById("dash-clock").textContent=new Date().toLocaleString();},1000);
+  document.getElementById("dash-clock").textContent=new Date().toLocaleString();
+  await loadInitialCurrency();
+  loadDashboard();
+  setInterval(loadDashboard,30000);
+});
+
+async function loadDashboard(){
+  try{
+    const [s,t]=await Promise.all([
+      fetch("/api/dashboard-stats").then(r=>r.json()),
+      fetch("/api/sales-trends").then(r=>r.json())
+    ]);
+    renderStats(s);
+    const predictions = (s.recent_predictions || []);
+    const groupedForecasts = groupForecastsByCombination(predictions);
+    renderPredictions(groupedForecasts);
+    renderTrend(t.daily||[]);
+    renderCats(s.categories||[]);
+  }catch(e){console.error(e);}
+}
+
+function groupForecastsByCombination(predictions) {
+  const seen = new Set();
+  const result = [];
+  for (const pred of predictions) {
+    const key = pred.session_id || (pred.category + '|' + pred.region + '|' + pred.model_type);
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(pred);
+    }
+  }
+  return result.slice(0, 10);
+}
+
+function getModelBadgeClass(modelType) {
+  const mt = (modelType || "LSTM").toLowerCase();
+  if (mt === 'lstm') return 'model-lstm';
+  if (mt === 'arima') return 'model-arima';
+  return 'model-exp';
+}
+
+function getModelDisplayName(modelType) {
+  const mt = (modelType || "LSTM").toUpperCase();
+  if (mt === 'LSTM') return 'LSTM';
+  if (mt === 'ARIMA') return 'ARIMA';
+  if (mt === 'EXPONENTIAL_SMOOTHING') return 'Exponential Smoothing';
+  return mt;
+}
+
+function renderStats(d){
+  const s=d.stats||{};
+  document.getElementById("statsGrid").innerHTML=
+    statCard("si-blue","fa-dollar-sign","Total Sales",fmtMoney(s.total_sales))+
+    statCard("si-green","fa-chart-line","Monthly Growth",(s.monthly_growth||0).toFixed(1)+"%",
+      '<span class="stat-sub '+(s.monthly_growth>=0?"positive":"negative")+'">'+(s.monthly_growth>=0?"▲":"▼")+" vs last month</span>")+
+    statCard("si-orange","fa-shopping-cart","Units Sold",(s.total_units||0).toLocaleString())+
+    statCard("si-purple","fa-robot","AI Predictions",s.total_predictions||0);
+}
+
+function statCard(ic,fa,label,val,extra){
+  return '<div class="stat-card"><div class="stat-icon '+ic+'"><i class="fas '+fa+'"></i></div><div><div class="stat-label">'+label+'</div><div class="stat-value">'+val+'</div>'+(extra||"")+"</div></div>";
+}
+
+function renderPredictions(forecasts){
+  const el=document.getElementById("predictionsTable");
+  if(!forecasts.length){el.innerHTML='<div class="empty-state"><i class="fas fa-robot"></i><p>No forecasts yet. <a href="/forecast">Generate your first forecast →</a></p></div>';return;}
+  window.recentForecasts = forecasts;
+  let rows=forecasts.map((f, idx)=>`<tr style="cursor:pointer" onclick="showForecastDetail(${idx})">
+    <td><strong>${escapeHtml2(f.category)}</strong></td>
+    <td>${escapeHtml2(f.region)}</td>
+    <td><span class="model-tag ${getModelBadgeClass(f.model_type)}">${getModelDisplayName(f.model_type)}</span></td>
+    <td>${fmtMoney(f.predicted_sales)}</td>
+    <td>${f.forecast_days ? f.forecast_days + ' days' : 'N/A'}</td>
+    <td>${f.date || 'N/A'}</td>
+    <td><span class="badge badge-info" style="cursor:pointer"><i class="fas fa-chart-line"></i> View Details</span></td>
+   </tr>`).join("");
+  el.innerHTML='<div class="table-wrap"><table><thead><tr><th>Category</th><th>Region</th><th>Model</th><th>Total Predicted</th><th>Period</th><th>Start Date</th><th></th></tr></thead><tbody>'+rows+"</tbody></table></div>";
+}
+
+function escapeHtml2(text) {
+  if(!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function showForecastDetail(index) {
+  const forecast = window.recentForecasts[index];
+  if(!forecast) return;
+  const params = new URLSearchParams({
+    view: forecast.category, region: forecast.region,
+    session_id: forecast.session_id || '', date: forecast.date || ''
+  });
+  window.location.href = '/forecast?' + params.toString();
+}
+
+function renderTrend(daily){
+  if(!daily.length){document.getElementById("salesTrendChart").innerHTML='<div class="empty-state"><i class="fas fa-chart-line"></i><p>No data yet</p></div>';return;}
+  // Convert values with current rate
+  const yValues = daily.map(d => d.total * CURRENCY.rate);
+  Plotly.newPlot("salesTrendChart",[{x:daily.map(d=>d.date),y:yValues,type:"scatter",mode:"lines",fill:"tozeroy",line:{color:"#667eea",width:2},fillcolor:"rgba(102,126,234,.1)"}],
+    {height:270,margin:{l:60,r:15,t:15,b:50},xaxis:{gridcolor:"#f5f5f5"},yaxis:{gridcolor:"#f5f5f5",tickprefix:CURRENCY.symbol},plot_bgcolor:"white",paper_bgcolor:"white"},{responsive:true});
+}
+
+function renderCats(cats){
+  if(!cats.length){document.getElementById("categoryChart").innerHTML='<div class="empty-state"><i class="fas fa-chart-pie"></i><p>No data yet</p></div>';return;}
+  Plotly.newPlot("categoryChart",[{labels:cats.map(c=>c.category),values:cats.map(c=>c.total),type:"pie",hole:.4,marker:{colors:["#667eea","#764ba2","#10b981","#f59e0b","#8b5cf6","#ef4444"]}}],
+    {height:270,margin:{l:10,r:10,t:20,b:10},showlegend:true,plot_bgcolor:"white",paper_bgcolor:"white"},{responsive:true});
+}
+</script>
+</body>
+</html>

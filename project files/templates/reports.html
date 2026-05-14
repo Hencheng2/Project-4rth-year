@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reports - SalesForecast AI</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+:root{--primary:#667eea;--secondary:#764ba2;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--dark:#1f2937;--light:#f9fafb;--gray:#6b7280}
+body{background:#f5f7fa;color:var(--dark)}
+.sidebar{position:fixed;left:0;top:0;height:100vh;width:250px;background:white;box-shadow:2px 0 8px rgba(0,0,0,.08);display:flex;flex-direction:column;z-index:1000}
+.sidebar-header{padding:24px 20px 20px;border-bottom:1px solid #e5e7eb}
+.logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:11px;color:#9ca3af;margin-top:3px}
+.nav-links{padding:12px 0;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;padding:11px 20px;color:var(--gray);text-decoration:none;transition:all .2s;font-size:14px;font-weight:500}
+.nav-item:hover,.nav-item.active{background:linear-gradient(90deg,rgba(102,126,234,.1),rgba(118,75,162,.1));color:var(--primary);border-right:3px solid var(--primary)}
+.nav-item i{margin-right:11px;width:18px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid #e5e7eb}
+.user-badge{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:var(--dark)}
+.role-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase}
+.role-admin{background:rgba(239,68,68,.15);color:#dc2626}
+.role-user{background:rgba(102,126,234,.15);color:var(--primary)}
+.logout-link{display:block;text-align:center;padding:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px}
+.main-content{margin-left:250px;padding:24px;min-height:100vh}
+.top-bar{background:white;border-radius:12px;padding:15px 22px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.top-bar h2{font-size:19px;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 17px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,.35)}
+.btn-success{background:linear-gradient(135deg,#10b981,#34d399)}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#f87171)}
+.btn-outline{background:white;color:var(--primary);border:2px solid var(--primary)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-full{width:100%;justify-content:center;margin-bottom:8px}
+.card{background:white;border-radius:12px;padding:22px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card-title{font-size:16px;font-weight:700}
+.form-group{margin-bottom:15px}
+.form-group label{display:block;margin-bottom:6px;font-weight:600;font-size:13px}
+.form-control{width:100%;padding:9px 13px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;background:white;transition:border-color .2s}
+.form-control:focus{outline:none;border-color:var(--primary)}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:22px}
+.stat-card{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:16px;transition:transform .2s}
+.stat-card:hover{transform:translateY(-3px)}
+.stat-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.si-blue{background:linear-gradient(135deg,#667eea,#764ba2);color:white}
+.si-green{background:linear-gradient(135deg,#10b981,#34d399);color:white}
+.si-orange{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:white}
+.si-purple{background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:white}
+.si-red{background:linear-gradient(135deg,#ef4444,#f87171);color:white}
+.stat-label{font-size:12px;color:var(--gray);font-weight:500}
+.stat-value{font-size:24px;font-weight:800;line-height:1.1}
+.stat-sub{font-size:11px;font-weight:600;margin-top:3px}
+.positive{color:var(--success)}.negative{color:var(--danger)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:#f8f9fa;padding:10px 13px;text-align:left;font-weight:700;color:var(--gray);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e5e7eb}
+td{padding:11px 13px;border-bottom:1px solid #f3f4f6;font-size:13px;color:var(--dark)}
+tr:hover td{background:#fafafa}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-success{background:rgba(16,185,129,.15);color:#059669}
+.badge-warning{background:rgba(245,158,11,.15);color:#d97706}
+.badge-danger{background:rgba(239,68,68,.15);color:#dc2626}
+.badge-info{background:rgba(102,126,234,.15);color:var(--primary)}
+.msg-box{padding:13px 16px;border-radius:8px;margin-bottom:14px;display:none;font-size:13px}
+.msg-success{background:#d1fae5;color:#065f46;border-left:4px solid #10b981}
+.msg-error{background:#fee2e2;color:#991b1b;border-left:4px solid #ef4444}
+.msg-warning{background:#fffbeb;color:#92400e;border-left:4px solid #f59e0b}
+.spinner{width:36px;height:36px;border:4px solid #e5e7eb;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-box{text-align:center;padding:40px;color:var(--gray)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray)}
+.empty-state i{font-size:44px;margin-bottom:14px;display:block;opacity:.3}
+.admin-gate{display:none!important}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}}
+
+.report-types{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.report-type-card{border:2px solid #e5e7eb;border-radius:10px;padding:18px;cursor:pointer;transition:all .2s;text-align:center}
+.report-type-card:hover,.report-type-card.selected{border-color:var(--primary);background:rgba(102,126,234,.05)}
+.report-type-card i{font-size:28px;margin-bottom:8px;display:block}
+.report-type-card h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.report-type-card p{font-size:11px;color:var(--gray)}
+.schedule-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f3f4f6}
+.schedule-item:last-child{border-bottom:none}
+
+.pagination .page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pagination {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.page-btn {
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.page-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+</style>
+</head>
+<body>
+<div class="sidebar"><div class="sidebar-header"><div class="logo">SalesForecast AI</div><div class="logo-sub">LSTM · Deep Learning</div></div>
+  <div class="nav-links"><a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+<a href="/data-management" class="nav-item"><i class="fas fa-database"></i><span>Data Management</span></a>
+<a href="/forecast" class="nav-item"><i class="fas fa-bullseye"></i><span>Generate Forecast</span></a>
+<a href="/trends-analysis" class="nav-item"><i class="fas fa-chart-bar"></i><span>Trends Analysis</span></a>
+<a href="/reports" class="nav-item active"><i class="fas fa-file-export"></i><span>Reports</span></a>
+<a href="/anomalies" class="nav-item"><i class="fas fa-exclamation-triangle"></i><span>Anomalies</span></a>
+<a href="/what-if" class="nav-item"><i class="fas fa-sliders-h"></i><span>What-If Analysis</span></a>
+<a href="/model-training" class="nav-item admin-gate"><i class="fas fa-brain"></i><span>Model Training</span></a>
+<a href="/admin/users" class="nav-item admin-gate"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+</div>
+  <div class="sidebar-footer"><div class="user-badge"><div class="user-avatar" id="nav-avatar">?</div>
+      <div><div class="user-name" id="nav-username">...</div><div style="margin-top:2px"><span class="role-badge" id="nav-role-badge">...</span></div></div></div>
+    <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></div></div>
+<div class="main-content">
+
+  <div class="top-bar">
+    <h2><i class="fas fa-file-export" style="color:var(--primary);margin-right:10px"></i>Reports</h2>
+  </div>
+  <div id="msg-success" class="msg-box msg-success"></div>
+  <div id="msg-error" class="msg-box msg-error"></div>
+
+  <!-- Report Types -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Select Report Type</span></div>
+    <div class="report-types">
+      <div class="report-type-card selected" onclick="selReportType(this,'sales')">
+        <i class="fas fa-chart-line" style="color:var(--primary)"></i><h4>Sales Report</h4><p>Detailed sales performance</p>
+      </div>
+      <div class="report-type-card" onclick="selReportType(this,'forecast')">
+        <i class="fas fa-bullseye" style="color:var(--success)"></i><h4>Forecast Report</h4><p>Prediction results</p>
+      </div>
+      <div class="report-type-card" onclick="selReportType(this,'trends')">
+        <i class="fas fa-chart-bar" style="color:var(--warning)"></i><h4>Trends Report</h4><p>Patterns & analysis</p>
+      </div>
+    </div>
+    <input type="hidden" id="rp-type" value="sales">
+  </div>
+
+  <!-- Report Parameters -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Report Parameters</span></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="rp-start" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" id="rp-end" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Format</label>
+        <select id="rp-format" class="form-control">
+          <option value="csv">CSV</option>
+          <option value="excel">Excel (.xlsx)</option>
+          <option value="pdf">PDF</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category Filter</label>
+        <select id="rp-category" class="form-control"><option value="">All Categories</option></select>
+      </div>
+      <div class="form-group">
+        <label>Region Filter</label>
+        <select id="rp-region" class="form-control"><option value="">All Regions</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn" onclick="generateReport()"><i class="fas fa-download"></i>Generate & Download</button>
+      <button class="btn btn-outline" onclick="previewReport()"><i class="fas fa-eye"></i>Preview Data</button>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="card" id="preview-card" style="display:none">
+    <div class="card-header">
+      <span class="card-title">Data Preview</span>
+      <div>
+        <span id="preview-record-info" style="font-size:12px;color:var(--gray);margin-right:12px"></span>
+        <button class="btn btn-sm btn-danger" onclick="closePreview()"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div id="preview-content"></div>
+    <div id="preview-pagination" class="pagination" style="margin-top:16px;justify-content:center"></div>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="card" id="summary-card" style="display:none">
+    <div class="card-header"><span class="card-title">Report Summary</span></div>
+    <div id="summary-stats"></div>
+    <div id="summary-chart" style="height:260px;margin-top:14px"></div>
+  </div>
+
+  <!-- Scheduled Reports -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Scheduled Reports</span>
+      <button class="btn btn-sm" onclick="showScheduleForm()">
+        <i class="fas fa-plus"></i>Schedule New
+      </button>
+    </div>
+    
+    <!-- Send Now Modal -->
+    <div id="sendNowModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;justify-content:center;align-items:center">
+      <div style="background:white;border-radius:16px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto">
+        <h3 style="margin-bottom:16px">Send Report Now</h3>
+        <div class="form-group">
+          <label>Report Type</label>
+          <select id="send-report-type" class="form-control">
+            <option value="sales">Sales Report</option>
+            <option value="forecast">Forecast Report</option>
+            <option value="trends">Trends Report</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date Range</label>
+          <div class="form-row">
+            <input type="date" id="send-start-date" class="form-control">
+            <input type="date" id="send-end-date" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Category Filter (optional)</label>
+          <select id="send-category" class="form-control"><option value="">All Categories</option></select>
+        </div>
+        <div class="form-group">
+          <label>Region Filter (optional)</label>
+          <select id="send-region" class="form-control"><option value="">All Regions</option></select>
+        </div>
+        <div class="form-group">
+          <label>Format</label>
+          <select id="send-format" class="form-control">
+            <option value="csv">CSV</option>
+            <option value="excel">Excel (.xlsx)</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Custom Recipients (optional)</label>
+          <input type="text" id="send-recipients" class="form-control" placeholder="email@example.com, another@example.com">
+          <small style="color:var(--gray)">Leave empty to use scheduled recipients</small>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="btn" id="sendNowConfirmBtn">Send Now</button>
+          <button class="btn btn-outline" onclick="closeSendNowModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Schedule Form (for new and edit) -->
+    <div id="schedule-form" style="display:none;margin-bottom:16px;padding:16px;background:var(--light);border-radius:8px">
+      <h4 id="schedule-form-title" style="margin-bottom:12px">New Scheduled Report</h4>
+      <input type="hidden" id="edit-schedule-id" value="">
+      <div class="form-row">
+        <div class="form-group"><label>Report Name</label><input type="text" id="sc-name" class="form-control" placeholder="Weekly Sales Report"></div>
+        <div class="form-group"><label>Report Type</label>
+          <select id="sc-type" class="form-control">
+            <option value="sales">Sales Report</option>
+            <option value="forecast">Forecast Report</option>
+            <option value="trends">Trends Report</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Frequency</label>
+          <select id="sc-freq" class="form-control" onchange="toggleDayInput()">
+            <option value="daily">Daily</option>
+            <option value="weekly" selected>Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+        <div class="form-group" id="day-group"><label>Day of Week/Month</label>
+          <select id="sc-day" class="form-control">
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+            <option value="Sunday">Sunday</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Time</label><input type="time" id="sc-time" class="form-control" value="08:00"></div>
+        <div class="form-group"><label>Format</label>
+          <select id="sc-format" class="form-control">
+            <option value="csv">CSV</option>
+            <option value="excel">Excel</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Email Recipients (comma separated)</label><input type="text" id="sc-emails" class="form-control" placeholder="user@company.com, manager@company.com"></div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button class="btn btn-success" onclick="saveSchedule()"><i class="fas fa-save"></i>Save Schedule</button>
+        <button class="btn btn-outline" onclick="cancelScheduleForm()"><i class="fas fa-times"></i>Cancel</button>
+      </div>
+    </div>
+    
+    <div id="scheduled-list"><div class="loading-box"><div class="spinner"></div></div></div>
+  </div>
+</div>
+<script>(async function(){try{const r=await fetch("/api/user-info");const u=await r.json();const name=u.username||"User";const role=u.role||"user";document.getElementById("nav-avatar").textContent=name[0].toUpperCase();document.getElementById("nav-username").textContent=name;const rb=document.getElementById("nav-role-badge");rb.textContent=role;rb.className="role-badge role-"+role;if(role==="admin"){document.querySelectorAll(".admin-gate").forEach(function(el){el.style.setProperty("display","flex","important");});}window._userRole=role;window._userName=name;document.dispatchEvent(new CustomEvent("userLoaded",{detail:{role:role,name:name}}));}catch(e){console.error("nav",e);}})();</script>
+<script>
+
+document.addEventListener("DOMContentLoaded",async function(){
+  const today=new Date().toISOString().split("T")[0];
+  const monthAgo=new Date(Date.now()-30*864e5).toISOString().split("T")[0];
+  document.getElementById("rp-start").value=monthAgo;
+  document.getElementById("rp-end").value=today;
+  await loadDropdowns();
+  loadScheduled();
+  loadReportSummary();
+  
+  // Also populate send modal dropdowns
+  await loadSendModalDropdowns();
+  
+  // Add event listeners to refresh when filters change
+  const startDateInput = document.getElementById("rp-start");
+  const endDateInput = document.getElementById("rp-end");
+  const categorySelect = document.getElementById("rp-category");
+  const regionSelect = document.getElementById("rp-region");
+  
+  function refreshOnChange() {
+    loadReportSummary();
+    // If preview is open, refresh it too
+    const previewCard = document.getElementById("preview-card");
+    if (previewCard && previewCard.style.display === "block") {
+      previewReport();
+    }
+  }
+  
+  if(startDateInput) startDateInput.addEventListener("change", refreshOnChange);
+  if(endDateInput) endDateInput.addEventListener("change", refreshOnChange);
+  if(categorySelect) categorySelect.addEventListener("change", refreshOnChange);
+  if(regionSelect) regionSelect.addEventListener("change", refreshOnChange);
+  
+  // Listen for report type selection changes
+  const reportTypeCards = document.querySelectorAll(".report-type-card");
+  reportTypeCards.forEach(function(card) {
+    card.addEventListener("click", function() {
+      setTimeout(refreshOnChange, 100);
+    });
+  });
+});
+
+async function loadDropdowns(){
+  try{
+    const r=await fetch("/api/categories-regions");const d=await r.json();
+    ["rp-category"].forEach(function(id){
+      const sel=document.getElementById(id);
+      (d.categories||[]).forEach(function(c){const o=document.createElement("option");o.value=c;o.textContent=c;sel.appendChild(o);});
+    });
+    ["rp-region"].forEach(function(id){
+      const sel=document.getElementById(id);
+      (d.regions||[]).forEach(function(r){const o=document.createElement("option");o.value=r;o.textContent=r;sel.appendChild(o);});
+    });
+  }catch(e){console.error(e);}
+}
+
+async function loadSendModalDropdowns(){
+  try{
+    const r=await fetch("/api/categories-regions");const d=await r.json();
+    const sendCat = document.getElementById("send-category");
+    const sendReg = document.getElementById("send-region");
+    if(sendCat){
+      sendCat.innerHTML = '<option value="">All Categories</option>';
+      (d.categories||[]).forEach(function(c){const o=document.createElement("option");o.value=c;o.textContent=c;sendCat.appendChild(o);});
+    }
+    if(sendReg){
+      sendReg.innerHTML = '<option value="">All Regions</option>';
+      (d.regions||[]).forEach(function(r){const o=document.createElement("option");o.value=r;o.textContent=r;sendReg.appendChild(o);});
+    }
+  }catch(e){console.error(e);}
+}
+
+function selReportType(el,type){
+  document.querySelectorAll(".report-type-card").forEach(function(c){c.classList.remove("selected");});
+  el.classList.add("selected");
+  document.getElementById("rp-type").value=type;
+  
+  // Close preview when report type changes to avoid confusion
+  const previewCard = document.getElementById("preview-card");
+  if (previewCard && previewCard.style.display === "block") {
+    closePreview();
+  }
+  
+  // Update summary based on report type
+  loadReportSummary();
+}
+
+async function loadReportSummary(){
+  const reportType = document.getElementById("rp-type").value;
+  const start = document.getElementById("rp-start").value;
+  const end = document.getElementById("rp-end").value;
+  const cat = document.getElementById("rp-category").value;
+  const reg = document.getElementById("rp-region").value;
+  
+  if (!start || !end) return;
+  
+  const card = document.getElementById("summary-card");
+  const chartDiv = document.getElementById("summary-chart");
+  
+  if (reportType === "forecast") {
+    // Load forecast summary with filters
+    try {
+      const response = await fetch("/api/predictions?limit=10000");
+      const predictions = await response.json();
+      
+      let filtered = predictions.filter(function(p) {
+        return p.forecast_date >= start && p.forecast_date <= end;
+      });
+      
+      if (cat) filtered = filtered.filter(function(p) { return p.product_category === cat; });
+      if (reg) filtered = filtered.filter(function(p) { return p.region === reg; });
+      
+      const totalForecast = filtered.reduce(function(sum, p) { return sum + (p.predicted_sales || 0); }, 0);
+      const avgForecast = filtered.length ? totalForecast / filtered.length : 0;
+      const uniqueModels = new Set(filtered.map(function(p) { return p.model_type; }));
+      
+      card.style.display = "block";
+      document.getElementById("summary-stats").innerHTML =
+        '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);gap:12px">' +
+        miniStat("Total Forecast", "$" + fmt(totalForecast), "si-blue") +
+        miniStat("Avg per Day", "$" + fmt(avgForecast), "si-green") +
+        miniStat("Forecast Records", filtered.length.toLocaleString(), "si-orange") +
+        '</div>' +
+        '<div style="margin-top:12px;font-size:12px;color:var(--gray)">Models used: ' + Array.from(uniqueModels).join(", ") + '</div>';
+      
+      chartDiv.style.display = "none";
+      
+    } catch(e) {
+      console.error("Error loading forecast summary:", e);
+    }
+  } else if (reportType === "trends") {
+    // Load trends summary with filters - FIXED to work with filters
+    try {
+      let url = "/api/trends-analysis-data?start_date=" + start + "&end_date=" + end;
+      if (cat) url += "&category=" + encodeURIComponent(cat);
+      if (reg) url += "&region=" + encodeURIComponent(reg);
+      
+      const response = await fetch(url);
+      const trendsData = await response.json();
+      const trends = trendsData.trends || [];
+      
+      // Calculate summary stats
+      const upTrends = trends.filter(function(t) { return t.trend_direction === "up"; }).length;
+      const downTrends = trends.filter(function(t) { return t.trend_direction === "down"; }).length;
+      const avgValue = trends.length ? trends.reduce(function(s, t) { return s + (t.trend_value || 0); }, 0) / trends.length : 0;
+      
+      card.style.display = "block";
+      document.getElementById("summary-stats").innerHTML =
+        '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);gap:12px">' +
+        miniStat("Total Trends", trends.length.toLocaleString(), "si-blue") +
+        miniStat("Upward Trends", upTrends.toLocaleString(), "si-green") +
+        miniStat("Downward Trends", downTrends.toLocaleString(), "si-orange") +
+        '</div>' +
+        '<div style="margin-top:12px;font-size:12px;color:var(--gray)">Average trend value: ' + avgValue.toFixed(2) + '</div>';
+      
+      // Show decomposition chart if available
+      if (trendsData.decomposition && trendsData.decomposition.dates && trendsData.decomposition.dates.length) {
+        const decomp = trendsData.decomposition;
+        Plotly.newPlot("summary-chart", [
+          {x: decomp.dates, y: decomp.trend, name: "Trend", type: "scatter", mode: "lines", line: {color: "#667eea"}},
+          {x: decomp.dates, y: decomp.seasonal, name: "Seasonal", type: "scatter", mode: "lines", line: {color: "#10b981", dash: "dot"}}
+        ], {height: 260, margin: {l: 50, r: 20, t: 20, b: 50}, title: "Trend Decomposition"});
+        chartDiv.style.display = "block";
+      } else {
+        chartDiv.style.display = "none";
+      }
+      
+    } catch(e){
+      console.error("Error loading trends summary:", e);
+      card.style.display = "block";
+      document.getElementById("summary-stats").innerHTML =
+        '<div class="stats-grid" style="grid-template-columns:repeat(2,1fr);gap:12px">' +
+        miniStat("Trend Analysis", "Available", "si-purple") +
+        miniStat("Time Period", start + " to " + end, "si-blue") +
+        '</div>';
+      chartDiv.style.display = "none";
+    }
+  } else {
+    // Sales report summary - load with filters from sales data
+    try {
+      // Build URL with filters for sales summary
+      let url = "/api/sales-summary?start_date=" + start + "&end_date=" + end;
+      if (cat) url += "&category=" + encodeURIComponent(cat);
+      if (reg) url += "&region=" + encodeURIComponent(reg);
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      card.style.display = "block";
+      document.getElementById("summary-stats").innerHTML =
+        '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);gap:12px">' +
+        miniStat("Total Sales", "$" + fmt(data.total_sales), "si-blue") +
+        miniStat("Total Units", (data.total_units || 0).toLocaleString(), "si-orange") +
+        miniStat("Daily Average", "$" + fmt(data.avg_daily_sales), "si-green") + "</div>";
+      
+      if(data.categories && data.categories.length){
+        Plotly.newPlot("summary-chart", [
+          {labels: data.categories.map(function(c){return c.category;}), 
+           values: data.categories.map(function(c){return c.total;}), 
+           type: "pie", hole: .4, 
+           marker: {colors: ["#667eea","#764ba2","#10b981","#f59e0b","#8b5cf6"]}}
+        ], {height: 260, margin: {l: 10, r: 10, t: 20, b: 10}, plot_bgcolor: "white", paper_bgcolor: "white"}, {responsive: true});
+        chartDiv.style.display = "block";
+      } else {
+        chartDiv.style.display = "none";
+      }
+    } catch(e){
+      console.error("Error loading sales summary:", e);
+      card.style.display = "block";
+      document.getElementById("summary-stats").innerHTML =
+        '<div class="stats-grid" style="grid-template-columns:repeat(2,1fr);gap:12px">' +
+        miniStat("Total Sales", "Select dates to load", "si-blue") +
+        miniStat("Total Units", "Select dates to load", "si-orange") +
+        '</div>';
+      chartDiv.style.display = "none";
+    }
+  }
+}
+
+async function generateReport(){
+  const type=document.getElementById("rp-type").value;
+  const format=document.getElementById("rp-format").value;
+  const start=document.getElementById("rp-start").value;
+  const end=document.getElementById("rp-end").value;
+  const cat=document.getElementById("rp-category").value;
+  const reg=document.getElementById("rp-region").value;
+  
+  if(!start||!end){showMsg("error","Please select start and end dates.");return;}
+  showMsg("success","Generating report...");
+  
+  try{
+    let url = "/api/generate-report?type="+type+"&format="+format+"&start_date="+start+"&end_date="+end;
+    if(cat) url += "&category=" + encodeURIComponent(cat);
+    if(reg) url += "&region=" + encodeURIComponent(reg);
+    
+    const r=await fetch(url, {method:"GET"});
+    if(r.ok && (format==="csv"||format==="excel"||format==="pdf")){
+      const blob=await r.blob();
+      const urlBlob=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=urlBlob;
+      a.download="report_"+type+"_"+start+"_"+end+"."+format;
+      a.click();
+      URL.revokeObjectURL(urlBlob);
+      showMsg("success","Report downloaded!");
+    } else {
+      const result = await r.json();
+      showMsg("error", result.message || "Failed to generate report");
+    }
+  }catch(e){showMsg("error","Error: "+e.message);}
+}
+
+// Global variables for preview pagination
+let previewCurrentPage = 1;
+let previewTotalRecords = 0;
+let previewFilters = { start: '', end: '', category: '', region: '', reportType: 'sales' };
+const PREVIEW_PAGE_SIZE = 20;
+
+async function previewReport(){
+  // Reset to page 1 when opening preview
+  previewCurrentPage = 1;
+  
+  const start=document.getElementById("rp-start").value;
+  const end=document.getElementById("rp-end").value;
+  const cat=document.getElementById("rp-category").value;
+  const reg=document.getElementById("rp-region").value;
+  const reportType = document.getElementById("rp-type").value;
+  
+  if(!start||!end){showMsg("error","Please select dates.");return;}
+  
+  // Store filters for pagination including report type
+  previewFilters = { start: start, end: end, category: cat, region: reg, reportType: reportType };
+  
+  const card=document.getElementById("preview-card");
+  card.style.display="block";
+  
+  await loadPreviewPage(1);
+}
+
+async function loadPreviewPage(page){
+  previewCurrentPage = page;
+  const offset = (page - 1) * PREVIEW_PAGE_SIZE;
+  const reportType = previewFilters.reportType;
+  
+  let dataUrl = "";
+  let countUrl = "";
+  let isForecast = (reportType === "forecast");
+  let isTrends = (reportType === "trends");
+  
+  try {
+    let data = [];
+    let totalRecords = 0;
+    
+    if (isForecast) {
+      // For Forecast reports - fetch from predictions table
+      let url = "/api/predictions?limit=10000";
+      const response = await fetch(url);
+      const allPredictions = await response.json();
+      
+      // Filter by date range
+      const startDate = previewFilters.start;
+      const endDate = previewFilters.end;
+      let filtered = allPredictions.filter(function(p) {
+        return p.forecast_date >= startDate && p.forecast_date <= endDate;
+      });
+      
+      // Apply category filter
+      if (previewFilters.category) {
+        filtered = filtered.filter(function(p) {
+          return p.product_category === previewFilters.category;
+        });
+      }
+      
+      // Apply region filter
+      if (previewFilters.region) {
+        filtered = filtered.filter(function(p) {
+          return p.region === previewFilters.region;
+        });
+      }
+      
+      totalRecords = filtered.length;
+      
+      // Apply pagination
+      data = filtered.slice(offset, offset + PREVIEW_PAGE_SIZE);
+      
+      const contentDiv = document.getElementById("preview-content");
+      
+      if (!data.length && totalRecords === 0) {
+        contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No forecast data for selected period</p></div>';
+        document.getElementById("preview-pagination").innerHTML = "";
+        document.getElementById("preview-record-info").textContent = "";
+        return;
+      }
+      
+      const startRecord = offset + 1;
+      const endRecord = Math.min(offset + data.length, totalRecords);
+      document.getElementById("preview-record-info").textContent = 
+        `Showing ${startRecord} - ${endRecord} of ${totalRecords} forecast records`;
+      
+      let html = '<div class="table-wrap"><table><thead><tr>' +
+                 '<th>Forecast Date</th><th>Category</th><th>Region</th><th>Predicted Sales</th><th>Predicted Units</th><th>Model Type</th><th>Confidence Interval</th>' +
+                 '</tr></thead><tbody>';
+      
+      data.forEach(function(r){
+        const ciLower = r.confidence_interval_lower ? "$" + fmt(r.confidence_interval_lower) : "N/A";
+        const ciUpper = r.confidence_interval_upper ? "$" + fmt(r.confidence_interval_upper) : "N/A";
+        html += "<tr>" +
+                "<td>" + r.forecast_date + "</td>" +
+                "<td>" + (r.product_category || "N/A") + "</td>" +
+                "<td>" + (r.region || "N/A") + "</td>" +
+                "<td>$" + fmt(r.predicted_sales) + "</td>" +
+                "<td>" + (r.predicted_units || 0).toLocaleString() + "</td>" +
+                "<td><span class='badge badge-info'>" + (r.model_type || "LSTM") + "</span></td>" +
+                "<td>" + ciLower + " - " + ciUpper + "</td>" +
+                "</tr>";
+      });
+      
+      html += "</tbody></table></div>";
+      contentDiv.innerHTML = html;
+      
+    } else if (isTrends) {
+      // For Trends reports - fetch from trends-analysis-data endpoint with filters - FIXED
+      let url = "/api/trends-analysis-data";
+      
+      // Build query params
+      let params = [];
+      if (previewFilters.start) params.push("start_date=" + previewFilters.start);
+      if (previewFilters.end) params.push("end_date=" + previewFilters.end);
+      if (previewFilters.category) params.push("category=" + encodeURIComponent(previewFilters.category));
+      if (previewFilters.region) params.push("region=" + encodeURIComponent(previewFilters.region));
+      if (params.length) url += "?" + params.join("&");
+      
+      const response = await fetch(url);
+      const trendsData = await response.json();
+      
+      // Get trends analysis data
+      const trends = trendsData.trends || [];
+      totalRecords = trends.length;
+      
+      // Apply pagination
+      data = trends.slice(offset, offset + PREVIEW_PAGE_SIZE);
+      
+      const contentDiv = document.getElementById("preview-content");
+      
+      if (!data.length && totalRecords === 0) {
+        contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No trend data for selected period</p></div>';
+        document.getElementById("preview-pagination").innerHTML = "";
+        document.getElementById("preview-record-info").textContent = "";
+        return;
+      }
+      
+      const startRecord = offset + 1;
+      const endRecord = Math.min(offset + data.length, totalRecords);
+      document.getElementById("preview-record-info").textContent = 
+        `Showing ${startRecord} - ${endRecord} of ${totalRecords} trend records`;
+      
+      let html = '<div class="table-wrap"><table><thead><tr>' +
+                 '<th>Trend Type</th><th>Value</th><th>Direction</th><th>Start Date</th><th>End Date</th><th>Created At</th>' +
+                 '</tr></thead><tbody>';
+      
+      data.forEach(function(r){
+        const directionClass = r.trend_direction === "up" ? "badge-success" : (r.trend_direction === "down" ? "badge-danger" : "badge-warning");
+        html += "<tr>" +
+                "<td><code>" + (r.trend_type || "N/A") + "</code></td>" +
+                "<td>" + (typeof r.trend_value === 'number' ? r.trend_value.toFixed(2) : r.trend_value) + "</td>" +
+                "<td><span class='badge " + directionClass + "'>" + (r.trend_direction || "stable") + "</span></td>" +
+                "<td>" + (r.start_date || "N/A") + "</td>" +
+                "<td>" + (r.end_date || "N/A") + "</td>" +
+                "<td>" + (r.created_at ? new Date(r.created_at).toLocaleDateString() : "N/A") + "</td>" +
+                "</tr>";
+      });
+      
+      html += "</tbody></table></div>";
+      contentDiv.innerHTML = html;
+      
+    } else {
+      // For Sales reports - use existing sales-data endpoint
+      dataUrl = "/api/sales-data?limit=" + PREVIEW_PAGE_SIZE + "&offset=" + offset + 
+                "&start_date=" + previewFilters.start + "&end_date=" + previewFilters.end;
+      if(previewFilters.category) dataUrl += "&category=" + encodeURIComponent(previewFilters.category);
+      if(previewFilters.region) dataUrl += "&region=" + encodeURIComponent(previewFilters.region);
+      
+      countUrl = "/api/sales-count?start_date=" + previewFilters.start + "&end_date=" + previewFilters.end;
+      if(previewFilters.category) countUrl += "&category=" + encodeURIComponent(previewFilters.category);
+      if(previewFilters.region) countUrl += "&region=" + encodeURIComponent(previewFilters.region);
+      
+      const [dataResponse, countResponse] = await Promise.all([
+        fetch(dataUrl),
+        fetch(countUrl)
+      ]);
+      
+      data = await dataResponse.json();
+      const countData = await countResponse.json();
+      totalRecords = countData.count || 0;
+      
+      const contentDiv = document.getElementById("preview-content");
+      
+      if(!data.length && totalRecords === 0){
+        contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No sales data for selected period</p></div>';
+        document.getElementById("preview-pagination").innerHTML = "";
+        document.getElementById("preview-record-info").textContent = "";
+        return;
+      }
+      
+      const startRecord = offset + 1;
+      const endRecord = Math.min(offset + data.length, totalRecords);
+      document.getElementById("preview-record-info").textContent = 
+        `Showing ${startRecord} - ${endRecord} of ${totalRecords} sales records`;
+      
+      let html = '<div class="table-wrap"><table><thead><tr>' +
+                 '<th>Date</th><th>Category</th><th>Region</th><th>Units</th><th>Unit Price</th><th>Total Sales</th>' +
+                 '</tr></thead><tbody>';
+      
+      data.forEach(function(r){
+        html += "<tr>" +
+                "<td>" + r.date + "</td>" +
+                "<td>" + r.product_category + "</td>" +
+                "<td>" + r.region + "</td>" +
+                "<td>" + (r.units_sold || 0).toLocaleString() + "</td>" +
+                "<td>$" + fmt(r.unit_price) + "</td>" +
+                "<td>$" + fmt(r.total_sales) + "</td>" +
+                "</tr>";
+      });
+      
+      html += "</tbody></table></div>";
+      contentDiv.innerHTML = html;
+    }
+    
+    previewTotalRecords = totalRecords;
+    
+    // Render pagination controls
+    renderPreviewPagination();
+    
+  } catch(e){
+    console.error("Preview error:", e);
+    showMsg("error","Error loading preview data: " + e.message);
+    document.getElementById("preview-content").innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error loading data: ' + e.message + '</p></div>';
+    document.getElementById("preview-pagination").innerHTML = "";
+  }
+}
+
+function renderPreviewPagination(){
+  const paginationDiv = document.getElementById("preview-pagination");
+  const totalPages = Math.ceil(previewTotalRecords / PREVIEW_PAGE_SIZE);
+  
+  if(totalPages <= 1){
+    paginationDiv.innerHTML = '<span style="font-size:13px;color:var(--gray)">All records shown</span>';
+    return;
+  }
+  
+  let html = '<button class="page-btn" onclick="loadPreviewPage(' + (previewCurrentPage - 1) + ')" ' + 
+             (previewCurrentPage <= 1 ? 'disabled' : '') + '>← Prev</button>';
+  
+  // Show page numbers (simplified pagination)
+  if(totalPages <= 7){
+    for(let i = 1; i <= totalPages; i++){
+      html += '<button class="page-btn ' + (i === previewCurrentPage ? 'active' : '') + 
+              '" onclick="loadPreviewPage(' + i + ')">' + i + '</button>';
+    }
+  } else {
+    // Always show first page
+    html += '<button class="page-btn ' + (1 === previewCurrentPage ? 'active' : '') + 
+            '" onclick="loadPreviewPage(1)">1</button>';
+    
+    if(previewCurrentPage > 3) html += '<span style="padding:0 6px;">...</span>';
+    
+    // Show pages around current
+    let startPage = Math.max(2, previewCurrentPage - 1);
+    let endPage = Math.min(totalPages - 1, previewCurrentPage + 1);
+    for(let i = startPage; i <= endPage; i++){
+      html += '<button class="page-btn ' + (i === previewCurrentPage ? 'active' : '') + 
+              '" onclick="loadPreviewPage(' + i + ')">' + i + '</button>';
+    }
+    
+    if(previewCurrentPage < totalPages - 2) html += '<span style="padding:0 6px;">...</span>';
+    
+    // Always show last page
+    html += '<button class="page-btn ' + (totalPages === previewCurrentPage ? 'active' : '') + 
+            '" onclick="loadPreviewPage(' + totalPages + ')">' + totalPages + '</button>';
+  }
+  
+  html += '<button class="page-btn" onclick="loadPreviewPage(' + (previewCurrentPage + 1) + ')" ' + 
+          (previewCurrentPage >= totalPages ? 'disabled' : '') + '>Next →</button>';
+  
+  paginationDiv.innerHTML = html;
+}
+
+function closePreview(){
+  document.getElementById('preview-card').style.display = 'none';
+  // Reset pagination state
+  previewCurrentPage = 1;
+  previewTotalRecords = 0;
+  previewFilters = { start: '', end: '', category: '', region: '', reportType: 'sales' };
+}
+
+async function loadScheduled(){
+  try{
+    const data=await fetch("/api/scheduled-reports").then(r=>r.json());
+    const el=document.getElementById("scheduled-list");
+    if(!data.length){el.innerHTML='<p style="color:var(--gray);font-size:13px">No scheduled reports yet.</p>';return;}
+    el.innerHTML=data.map(function(s){
+      const nextRun = s.next_run ? new Date(s.next_run).toLocaleString() : "Not scheduled";
+      return '<div class="schedule-item"><div><strong>'+escapeHtml(s.name)+'</strong><br><small style="color:var(--gray)">'+s.frequency+' · '+s.format+' · Next: '+nextRun+'</small></div>'+
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+        '<span class="badge '+(s.active?"badge-success":"badge-warning")+'">'+(s.active?"Active":"Paused")+'</span>'+
+        '<button class="btn btn-sm btn-outline" onclick="sendReportNow('+s.id+')" title="Send now"><i class="fas fa-paper-plane"></i></button>'+
+        '<button class="btn btn-sm btn-outline" onclick="editSchedule('+s.id+')" title="Edit"><i class="fas fa-edit"></i></button>'+
+        '<button class="btn btn-sm btn-danger" onclick="delSchedule('+s.id+')" title="Delete"><i class="fas fa-trash"></i></button>'+
+        '</div></div>';
+    }).join("");
+  }catch(e){console.error(e);}
+}
+
+function toggleDayInput(){
+  const freq = document.getElementById("sc-freq").value;
+  const dayGroup = document.getElementById("day-group");
+  const daySelect = document.getElementById("sc-day");
+  
+  if(freq === "daily"){
+    dayGroup.style.display = "none";
+  } else if(freq === "weekly"){
+    dayGroup.style.display = "block";
+    daySelect.innerHTML = '<option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>';
+  } else if(freq === "monthly"){
+    dayGroup.style.display = "block";
+    let options = '';
+    for(let i = 1; i <= 28; i++){
+      options += '<option value="'+i+'">Day '+i+'</option>';
+    }
+    daySelect.innerHTML = options;
+  }
+}
+
+function showScheduleForm(){
+  document.getElementById("edit-schedule-id").value = "";
+  document.getElementById("schedule-form-title").textContent = "New Scheduled Report";
+  document.getElementById("sc-name").value = "";
+  document.getElementById("sc-type").value = "sales";
+  document.getElementById("sc-freq").value = "weekly";
+  document.getElementById("sc-time").value = "08:00";
+  document.getElementById("sc-format").value = "csv";
+  document.getElementById("sc-emails").value = "";
+  toggleDayInput();
+  document.getElementById("schedule-form").style.display = "block";
+}
+
+function cancelScheduleForm(){
+  document.getElementById("schedule-form").style.display = "none";
+  document.getElementById("edit-schedule-id").value = "";
+}
+
+async function saveSchedule(){
+  const id = document.getElementById("edit-schedule-id").value;
+  const name = document.getElementById("sc-name").value.trim();
+  const type = document.getElementById("sc-type").value;
+  const freq = document.getElementById("sc-freq").value;
+  const day = document.getElementById("sc-day").value;
+  const time = document.getElementById("sc-time").value;
+  const format = document.getElementById("sc-format").value;
+  const emails = document.getElementById("sc-emails").value.split(",").map(function(e){return e.trim();}).filter(Boolean);
+  
+  if(!name || !emails.length){
+    showMsg("error","Please fill in name and at least one email.");
+    return;
+  }
+  
+  const payload = {
+    name: name,
+    report_type: type,
+    frequency: freq,
+    day: day,
+    time: time,
+    format: format,
+    email_recipients: emails
+  };
+  
+  try{
+    let url = "/api/schedule-report";
+    let method = "POST";
+    
+    if(id){
+      url = "/api/update-schedule/"+id;
+      method = "PUT";
+    }
+    
+    const r = await fetch(url, {
+      method: method,
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if(d.success){
+      showMsg("success", id ? "Schedule updated!" : "Report scheduled!");
+      document.getElementById("schedule-form").style.display = "none";
+      document.getElementById("edit-schedule-id").value = "";
+      loadScheduled();
+    } else {
+      showMsg("error", d.message);
+    }
+  } catch(e){
+    showMsg("error","Error: "+e.message);
+  }
+}
+
+async function editSchedule(id){
+  try{
+    const r = await fetch("/api/schedule-details/"+id);
+    const d = await r.json();
+    if(d.success && d.schedule){
+      const s = d.schedule;
+      document.getElementById("edit-schedule-id").value = s.id;
+      document.getElementById("schedule-form-title").textContent = "Edit Scheduled Report";
+      document.getElementById("sc-name").value = s.name;
+      document.getElementById("sc-type").value = s.report_type;
+      document.getElementById("sc-freq").value = s.frequency;
+      document.getElementById("sc-time").value = s.time;
+      document.getElementById("sc-format").value = s.format;
+      document.getElementById("sc-emails").value = Array.isArray(s.recipients) ? s.recipients.join(", ") : s.recipients;
+      
+      if(s.day){
+        document.getElementById("sc-day").value = s.day;
+      }
+      toggleDayInput();
+      document.getElementById("schedule-form").style.display = "block";
+    }
+  } catch(e){
+    showMsg("error","Error loading schedule details");
+  }
+}
+
+async function delSchedule(id){
+  if(!confirm("Delete this scheduled report?"))return;
+  try{
+    const r=await fetch("/api/delete-schedule/"+id,{method:"DELETE"});
+    const d=await r.json();
+    if(d.success){showMsg("success","Deleted.");loadScheduled();}
+    else showMsg("error",d.message);
+  } catch(e){}
+}
+
+// Global variable for current schedule ID being sent
+let currentSendScheduleId = null;
+
+async function sendReportNow(id){
+  currentSendScheduleId = id;
+  
+  // Refresh dropdowns in modal
+  await loadSendModalDropdowns();
+  
+  // Set default date range (last 30 days)
+  const today = new Date().toISOString().split('T')[0];
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+  document.getElementById('send-start-date').value = thirtyDaysAgo;
+  document.getElementById('send-end-date').value = today;
+  document.getElementById('send-recipients').value = '';
+  
+  // Set default format from schedule if available
+  try{
+    const r = await fetch("/api/schedule-details/"+id);
+    const d = await r.json();
+    if(d.success && d.schedule){
+      document.getElementById('send-format').value = d.schedule.format || 'csv';
+      document.getElementById('send-report-type').value = d.schedule.report_type || 'sales';
+    }
+  } catch(e){}
+  
+  // Show modal
+  document.getElementById('sendNowModal').style.display = 'flex';
+}
+
+function closeSendNowModal(){
+  document.getElementById('sendNowModal').style.display = 'none';
+  currentSendScheduleId = null;
+}
+
+// Setup send now confirm button
+document.addEventListener('DOMContentLoaded', function() {
+  const confirmBtn = document.getElementById('sendNowConfirmBtn');
+  if(confirmBtn){
+    confirmBtn.onclick = async function() {
+      if(!currentSendScheduleId) return;
+      
+      const startDate = document.getElementById('send-start-date').value;
+      const endDate = document.getElementById('send-end-date').value;
+      const recipientsRaw = document.getElementById('send-recipients').value;
+      const recipients = recipientsRaw ? recipientsRaw.split(',').map(e => e.trim()).filter(Boolean) : null;
+      const reportType = document.getElementById('send-report-type').value;
+      const category = document.getElementById('send-category').value;
+      const region = document.getElementById('send-region').value;
+      const format = document.getElementById('send-format').value;
+      
+      if(!startDate || !endDate){
+        showMsg("error", "Please select both start and end dates");
+        return;
+      }
+      
+      // Show loading on confirm button
+      const btn = confirmBtn;
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+      btn.disabled = true;
+      
+      try{
+        const r = await fetch("/api/send-report-now/"+currentSendScheduleId, {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({
+            start_date: startDate,
+            end_date: endDate,
+            recipients: recipients,
+            report_type: reportType,
+            category: category || null,
+            region: region || null,
+            format: format
+          })
+        });
+        const d = await r.json();
+        if(d.success){
+          showMsg("success", d.message);
+          closeSendNowModal();
+        } else {
+          showMsg("error", d.message);
+        }
+      } catch(e){
+        showMsg("error","Error: "+e.message);
+      } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+      }
+    };
+  }
+});
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+  if(!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function miniStat(label,val,ic){return '<div class="stat-card"><div class="stat-icon '+ic+'"></div><div><div class="stat-label">'+label+'</div><div class="stat-value" style="font-size:18px">'+val+'</div></div></div>';}
+function fmt(n){return Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function showMsg(type,msg){const el=document.getElementById("msg-"+type);if(!el)return;el.textContent=msg;el.style.display="block";setTimeout(function(){el.style.display="none";},6000);}
+
+</script>
+</body>
+</html>

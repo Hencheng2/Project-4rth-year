@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anomaly Detection - SalesForecast AI</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  :root {
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark: #1f2937;
+    --light: #f9fafb;
+    --gray: #6b7280;
+  }
+
+  body {
+    background: #f5f7fa;
+    color: var(--dark);
+  }
+
+  /* Sidebar — fixed, full height */
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 250px;
+    background: white;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, .08);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 3px;
+  }
+
+  .nav-links {
+    padding: 12px 0;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 11px 20px;
+    color: var(--gray);
+    text-decoration: none;
+    transition: all .2s;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .nav-item:hover,
+  .nav-item.active {
+    background: linear-gradient(90deg, rgba(102, 126, 234, .1), rgba(118, 75, 162, .1));
+    color: var(--primary);
+    border-right: 3px solid var(--primary);
+  }
+
+  .nav-item i {
+    margin-right: 11px;
+    width: 18px;
+    text-align: center;
+  }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+    flex-shrink: 0;
+  }
+
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+  }
+
+  .role-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .role-admin {
+    background: rgba(239, 68, 68, .15);
+    color: #dc2626;
+  }
+
+  .role-user {
+    background: rgba(102, 126, 234, .15);
+    color: var(--primary);
+  }
+
+  .logout-link {
+    display: block;
+    text-align: center;
+    padding: 9px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  /* Main layout */
+  .main-content {
+    margin-left: 250px;
+    padding: 20px;
+    min-height: 100vh;
+  }
+
+  .top-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 15px 22px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+  }
+
+  .top-bar h2 {
+    font-size: 19px;
+    font-weight: 700;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 17px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    text-decoration: none;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, .35);
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, #10b981, #34d399);
+  }
+
+  .btn-warning {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  }
+
+  .btn-danger {
+    background: linear-gradient(135deg, #ef4444, #f87171);
+  }
+
+  .btn-outline {
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+  }
+
+  .btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .btn-full {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+    margin-bottom: 16px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .form-group {
+    margin-bottom: 0;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    background: white;
+    transition: border-color .2s;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  /* Settings strip */
+  .settings-strip {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+  }
+
+  .settings-strip-inner {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .settings-strip-inner .form-group {
+    flex: 1;
+    min-width: 130px;
+  }
+
+  .settings-strip-inner .methods-group {
+    flex: 2;
+    min-width: 220px;
+  }
+
+  .settings-strip-inner .actions-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+    padding-bottom: 1px;
+  }
+
+  .settings-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--dark);
+  }
+
+  .settings-divider {
+    width: 1px;
+    background: #e5e7eb;
+    align-self: stretch;
+    margin: 0 4px;
+  }
+
+  .method-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .method-tag {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 2px solid #e5e7eb;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .method-tag.active {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, .1);
+    color: var(--primary);
+  }
+
+  /* Summary boxes */
+  .anomaly-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .asbox {
+    background: var(--light);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .asval {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .aslabel {
+    font-size: 11px;
+    color: var(--gray);
+    margin-top: 3px;
+  }
+
+  .severity-high {
+    color: var(--danger);
+    font-weight: 700;
+  }
+
+  .severity-medium {
+    color: var(--warning);
+    font-weight: 700;
+  }
+
+  .severity-low {
+    color: var(--success);
+    font-weight: 700;
+  }
+
+  .msg-box {
+    padding: 13px 16px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    display: none;
+    font-size: 13px;
+  }
+
+  .msg-success {
+    background: #d1fae5;
+    color: #065f46;
+    border-left: 4px solid #10b981;
+  }
+
+  .msg-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 4px solid #ef4444;
+  }
+
+  .msg-warning {
+    background: #fffbeb;
+    color: #92400e;
+    border-left: 4px solid #f59e0b;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 4px solid #e5e7eb;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .loading-box {
+    text-align: center;
+    padding: 40px;
+    color: var(--gray);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--gray);
+  }
+
+  .empty-state i {
+    font-size: 44px;
+    margin-bottom: 14px;
+    display: block;
+    opacity: .3;
+  }
+
+  .admin-gate {
+    display: none !important;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th {
+    background: #f8f9fa;
+    padding: 10px 13px;
+    text-align: left;
+    font-weight: 700;
+    color: var(--gray);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  td {
+    padding: 11px 13px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 13px;
+    color: var(--dark);
+  }
+
+  tr:hover td {
+    background: #fafafa;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .badge-success {
+    background: rgba(16, 185, 129, .15);
+    color: #059669;
+  }
+
+  .badge-warning {
+    background: rgba(245, 158, 11, .15);
+    color: #d97706;
+  }
+
+  .badge-danger {
+    background: rgba(239, 68, 68, .15);
+    color: #dc2626;
+  }
+
+  .badge-info {
+    background: rgba(102, 126, 234, .15);
+    color: var(--primary);
+  }
+
+  .ai-insights {
+    background: linear-gradient(135deg, #f5f7fa, #e9ecf3);
+    border-left: 4px solid var(--primary);
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .view-all-btn {
+    margin-top: 15px;
+    text-align: center;
+  }
+
+  .hidden-row {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    .sidebar {
+      transform: translateX(-100%);
+    }
+    .main-content {
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: 800px) {
+    .settings-strip-inner {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .settings-divider {
+      display: none;
+    }
+    .settings-strip-inner .actions-group {
+      flex-direction: row;
+      justify-content: flex-start;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">SalesForecast AI</div>
+    <div class="logo-sub">LSTM · Deep Learning</div>
+  </div>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+    <a href="/data-management" class="nav-item"><i class="fas fa-database"></i><span>Data Management</span></a>
+    <a href="/forecast" class="nav-item"><i class="fas fa-bullseye"></i><span>Generate Forecast</span></a>
+    <a href="/trends-analysis" class="nav-item"><i class="fas fa-chart-bar"></i><span>Trends Analysis</span></a>
+    <a href="/reports" class="nav-item"><i class="fas fa-file-export"></i><span>Reports</span></a>
+    <a href="/anomalies" class="nav-item active"><i class="fas fa-exclamation-triangle"></i><span>Anomalies</span></a>
+    <a href="/what-if" class="nav-item"><i class="fas fa-sliders-h"></i><span>What-If Analysis</span></a>
+    <a href="/model-training" class="nav-item admin-gate"><i class="fas fa-brain"></i><span>Model Training</span></a>
+    <a href="/admin/users" class="nav-item admin-gate"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="user-avatar" id="nav-avatar">?</div>
+      <div>
+        <div class="user-name" id="nav-username">...</div>
+        <div style="margin-top:2px"><span class="role-badge" id="nav-role-badge">...</span></div>
+      </div>
+    </div>
+    <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+</div>
+
+<div class="main-content">
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <h2><i class="fas fa-exclamation-triangle" style="color:var(--warning);margin-right:10px"></i>Anomaly Detection</h2>
+    <button class="btn" onclick="runDetection()"><i class="fas fa-search"></i>Run Detection</button>
+  </div>
+
+  <div id="msg-success" class="msg-box msg-success"></div>
+  <div id="msg-error" class="msg-box msg-error"></div>
+
+  <!-- Detection Settings -->
+  <div class="settings-strip">
+    <div class="settings-title"><i class="fas fa-sliders-h" style="color:var(--primary);margin-right:8px"></i>Detection Settings</div>
+    <div class="settings-strip-inner">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="an-category" class="form-control"><option value="">All Categories</option></select>
+      </div>
+      <div class="form-group">
+        <label>Region</label>
+        <select id="an-region" class="form-control"><option value="">All Regions</option></select>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="form-group methods-group">
+        <label>Detection Methods</label>
+        <div class="method-tags">
+          <span class="method-tag active" data-method="iqr" onclick="toggleMethod(this)">IQR</span>
+          <span class="method-tag active" data-method="zscore" onclick="toggleMethod(this)">Z-Score</span>
+          <span class="method-tag active" data-method="isolation_forest" onclick="toggleMethod(this)">Isolation Forest</span>
+        </div>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="form-group">
+        <label>Filter by Severity</label>
+        <select id="an-severity" class="form-control" onchange="filterTable()">
+          <option value="">All Severities</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="actions-group">
+        <button class="btn" onclick="runDetection()"><i class="fas fa-play"></i>Detect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="an-loading" class="loading-box card" style="display:none"><div class="spinner"></div><p>Detecting anomalies...</p></div>
+
+  <!-- Results -->
+  <div id="an-results" style="display:none">
+    <!-- Chart & Summary -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-chart-bar" style="color:var(--primary);margin-right:8px"></i>Anomaly Overview</span>
+      </div>
+      <div class="anomaly-summary" id="an-summary"></div>
+      <div id="an-chart" style="height:260px"></div>
+    </div>
+
+    <!-- Anomalies Table with View All toggle -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-table" style="color:var(--primary);margin-right:8px"></i>Detected Anomalies</span>
+        <button class="btn btn-sm btn-outline" onclick="exportAnomalies()"><i class="fas fa-download"></i>Export</button>
+      </div>
+      <div class="table-wrap">
+        <table id="anomaly-table">
+          <thead>
+            <tr><th>Date</th><th>Method</th><th>Category</th><th>Region</th><th>Sales Value</th><th>Deviation</th><th>Severity</th></tr>
+          </thead>
+          <tbody id="an-table-body"></tbody>
+        </table>
+      </div>
+      <div id="view-all-container" class="view-all-btn" style="display: none;"></div>
+    </div>
+
+    <!-- AI Insights -->
+    <div class="card" id="ai-insights-card" style="display:none; background: linear-gradient(135deg, #667eea08, #764ba208); border-left: 4px solid var(--primary);">
+      <div class="card-header" style="margin-bottom:12px">
+        <span class="card-title"><i class="fas fa-robot" style="color:var(--primary);margin-right:8px"></i>AI Business Analysis</span>
+        <span id="priority-badge" class="badge" style="font-size:12px; padding:4px 12px;"></span>
+      </div>
+      <div id="business-summary" style="margin-bottom:16px; padding:12px; background: #f0fdf4; border-radius:8px;">
+        <i class="fas fa-chart-line" style="color:#10b981; margin-right:8px"></i>
+        <strong>Analyzing actual anomaly data...</strong>
+      </div>
+      <div id="what-it-means" style="margin-bottom:16px; padding:12px; background: #fef3c7; border-radius:8px;">
+        <i class="fas fa-lightbulb" style="color:#f59e0b; margin-right:8px"></i>
+        <strong>Business Impact:</strong>
+        <div style="margin-top:8px; color:#78350f;">Loading specific insights based on detected anomalies...</div>
+      </div>
+      <div id="recommended-actions-section" style="margin-top:8px;">
+        <strong><i class="fas fa-list-check" style="color:var(--primary); margin-right:8px"></i>Recommended Actions (based on actual anomaly data):</strong>
+        <ul id="actions-list" style="margin-top:12px; margin-left:24px; list-style-type: none; padding-left:0;">
+          <li><i class="fas fa-spinner fa-pulse"></i> Analyzing anomaly patterns...</li>
+        </ul>
+      </div>
+      <div id="anomaly-stats-footer" style="margin-top:16px; padding-top:12px; border-top:1px solid #e5e7eb; font-size:11px; color:#6b7280; text-align:center;">
+        <i class="fas fa-chart-simple"></i> Anomalies are detected using statistical methods (IQR, Z-Score, Isolation Forest) on your actual sales data
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="an-empty" class="card">
+    <div class="empty-state"><i class="fas fa-search"></i><p>Click "Run Detection" to scan your sales data for anomalies.<br><small style="color:#9ca3af">Requires at least 10 sales records</small></p></div>
+  </div>
+
+</div>
+
+<script>
+  (async function() {
+    try {
+      const r = await fetch("/api/user-info");
+      const u = await r.json();
+      const name = u.username || "User";
+      const role = u.role || "user";
+      document.getElementById("nav-avatar").textContent = name[0].toUpperCase();
+      document.getElementById("nav-username").textContent = name;
+      const rb = document.getElementById("nav-role-badge");
+      rb.textContent = role;
+      rb.className = "role-badge role-" + role;
+      if (role === "admin") {
+        document.querySelectorAll(".admin-gate").forEach(function(el) {
+          el.style.setProperty("display", "flex", "important");
+        });
+      }
+      window._userRole = role;
+      window._userName = name;
+    } catch (e) {
+      console.error("nav", e);
+    }
+  })();
+
+  let allAnomalies = [];
+  let activeMethods = new Set(["iqr", "zscore", "isolation_forest"]);
+  let currentDisplayAll = false;     // track "view all" state for table
+
+  document.addEventListener("DOMContentLoaded", async function() {
+    await loadDropdowns();
+  });
+
+  async function loadDropdowns() {
+    try {
+      const r = await fetch("/api/categories-regions");
+      const d = await r.json();
+      ["an-category"].forEach(function(id) {
+        const sel = document.getElementById(id);
+        (d.categories || []).forEach(function(c) {
+          const o = document.createElement("option");
+          o.value = c;
+          o.textContent = c;
+          sel.appendChild(o);
+        });
+      });
+      ["an-region"].forEach(function(id) {
+        const sel = document.getElementById(id);
+        (d.regions || []).forEach(function(r) {
+          const o = document.createElement("option");
+          o.value = r;
+          o.textContent = r;
+          sel.appendChild(o);
+        });
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function toggleMethod(el) {
+    const m = el.dataset.method;
+    if (activeMethods.has(m)) {
+      activeMethods.delete(m);
+      el.classList.remove("active");
+    } else {
+      activeMethods.add(m);
+      el.classList.add("active");
+    }
+  }
+
+  async function runDetection() {
+    if (activeMethods.size === 0) {
+      showMsg("error", "Select at least one detection method.");
+      return;
+    }
+    document.getElementById("an-loading").style.display = "block";
+    document.getElementById("an-results").style.display = "none";
+    document.getElementById("an-empty").style.display = "none";
+    document.getElementById("ai-insights-card").style.display = "none";
+    currentDisplayAll = false;
+
+    try {
+      const category = document.getElementById("an-category").value;
+      const region = document.getElementById("an-region").value;
+      let url = "/api/detect-anomalies";
+      let params = [];
+      if (category) params.push("category=" + encodeURIComponent(category));
+      if (region) params.push("region=" + encodeURIComponent(region));
+      if (params.length) url += "?" + params.join("&");
+
+      const r = await fetch(url);
+      const d = await r.json();
+      document.getElementById("an-loading").style.display = "none";
+      if (!d.success) {
+        showMsg("error", d.message || "Detection failed.");
+        document.getElementById("an-empty").style.display = "block";
+        return;
+      }
+
+      const anomalies = d.raw_anomalies || {};
+      allAnomalies = [];
+      Object.keys(anomalies).forEach(function(method) {
+        if (!activeMethods.has(method)) return;
+        (anomalies[method] || []).forEach(function(a) {
+          a._method = method;
+          allAnomalies.push(a);
+        });
+      });
+      renderResults(allAnomalies, d);
+      document.getElementById("an-results").style.display = "block";
+
+      // AI insights block
+      if (d.business_summary) {
+        document.getElementById("ai-insights-card").style.display = "block";
+        const priorityBadge = document.getElementById("priority-badge");
+        const priority = d.priority || "MEDIUM";
+        priorityBadge.textContent = priority;
+        if (priority === "HIGH") {
+          priorityBadge.className = "badge badge-danger";
+        } else if (priority === "MEDIUM") {
+          priorityBadge.className = "badge badge-warning";
+        } else {
+          priorityBadge.className = "badge badge-success";
+        }
+        document.getElementById("business-summary").innerHTML = '<i class="fas fa-chart-line" style="color:#10b981; margin-right:8px"></i><strong>' + escapeHtml2(d.business_summary) + '</strong>';
+        document.getElementById("what-it-means").innerHTML = '<i class="fas fa-lightbulb" style="color:#f59e0b; margin-right:8px"></i><strong>What This Means:</strong><br><span style="display:inline-block; margin-top:8px;">' + escapeHtml2(d.what_it_means) + '</span>';
+        const actionsList = document.getElementById("actions-list");
+        actionsList.innerHTML = "";
+        if (d.recommended_actions && d.recommended_actions.length) {
+          d.recommended_actions.forEach(function(action) {
+            const li = document.createElement("li");
+            li.style.marginBottom = "10px";
+            li.style.display = "flex";
+            li.style.alignItems = "flex-start";
+            li.style.gap = "8px";
+            li.innerHTML = '<i class="fas fa-arrow-right" style="color:var(--primary); margin-top:2px"></i><span>' + escapeHtml2(action) + '</span>';
+            actionsList.appendChild(li);
+          });
+        } else {
+          actionsList.innerHTML = '<li><i class="fas fa-info-circle"></i> No specific actions recommended at this time.</li>';
+        }
+      } else if (d.explanation) {
+        document.getElementById("ai-insights-card").style.display = "block";
+        document.getElementById("business-summary").innerHTML = '<i class="fas fa-chart-line"></i> <strong>' + escapeHtml2(d.explanation.split('\n')[0]) + '</strong>';
+        document.getElementById("what-it-means").innerHTML = '<i class="fas fa-lightbulb"></i> ' + escapeHtml2(d.explanation.replace(/\n/g, "<br>"));
+        document.getElementById("actions-list").innerHTML = '<li>Review the anomalies listed below for further investigation.</li>';
+      }
+    } catch (e) {
+      document.getElementById("an-loading").style.display = "none";
+      document.getElementById("an-empty").style.display = "block";
+      showMsg("error", "Error: " + e.message);
+    }
+  }
+
+  function renderResults(data, raw) {
+    const total = data.length;
+    const high = data.filter(function(a) { return getSeverity(a) === "high"; }).length;
+    const medium = data.filter(function(a) { return getSeverity(a) === "medium"; }).length;
+    const low = data.filter(function(a) { return getSeverity(a) === "low"; }).length;
+    
+    // Calculate actual anomaly statistics
+    let totalValue = 0;
+    let maxValue = 0;
+    let maxDate = "";
+    data.forEach(function(a) {
+      const val = Math.abs(a.total_sales || a.sales_value || 0);
+      totalValue += val;
+      if (val > maxValue) {
+        maxValue = val;
+        maxDate = a.date || a.anomaly_date || "";
+      }
+    });
+    const avgValue = total > 0 ? totalValue / total : 0;
+    
+    document.getElementById("an-summary").innerHTML =
+      '<div class="asbox"><div class="asval">' + total + '</div><div class="aslabel">Total Anomalies</div></div>' +
+      '<div class="asbox"><div class="asval severity-high">' + high + '</div><div class="aslabel">High Severity</div></div>' +
+      '<div class="asbox"><div class="asval severity-medium">' + medium + '</div><div class="aslabel">Medium Severity</div></div>' +
+      '<div class="asbox"><div class="asval">$' + fmt(maxValue) + '</div><div class="aslabel">Largest Anomaly</div></div>';
+    
+    renderChart(data);
+    renderTableWithPagination(data);
+    
+    // Update AI insights with actual anomaly statistics if raw data contains them
+    if (raw && raw.business_summary) {
+      document.getElementById("business-summary").innerHTML = '<i class="fas fa-chart-line" style="color:#10b981; margin-right:8px"></i><strong>' + escapeHtml2(raw.business_summary) + '</strong>';
+      
+      let meaningText = raw.what_it_means || "Analysis based on detected anomalies.";
+      if (maxValue > 0) {
+        meaningText += `<br><br><span style="background:#fef3c7; padding:4px 8px; border-radius:6px; display:inline-block; margin-top:8px;"><i class="fas fa-chart-simple"></i> Specific data: Largest anomaly $${fmt(maxValue)} on ${maxDate}</span>`;
+      }
+      document.getElementById("what-it-means").innerHTML = '<i class="fas fa-lightbulb" style="color:#f59e0b; margin-right:8px"></i><strong>What This Means:</strong><br><span style="display:inline-block; margin-top:8px;">' + meaningText + '</span>';
+      
+      const actionsList = document.getElementById("actions-list");
+      actionsList.innerHTML = "";
+      if (raw.recommended_actions && raw.recommended_actions.length) {
+        raw.recommended_actions.forEach(function(action) {
+          const li = document.createElement("li");
+          li.style.marginBottom = "10px";
+          li.style.display = "flex";
+          li.style.alignItems = "flex-start";
+          li.style.gap = "8px";
+          li.innerHTML = '<i class="fas fa-arrow-right" style="color:var(--primary); margin-top:2px"></i><span>' + escapeHtml2(action) + '</span>';
+          actionsList.appendChild(li);
+        });
+      } else {
+        actionsList.innerHTML = '<li><i class="fas fa-search"></i> Review the anomaly table above for specific dates and values that need investigation.</li>';
+      }
+      
+      if (raw.priority) {
+        const priorityBadge = document.getElementById("priority-badge");
+        priorityBadge.textContent = raw.priority;
+        if (raw.priority === "HIGH") {
+          priorityBadge.className = "badge badge-danger";
+        } else if (raw.priority === "MEDIUM" || raw.priority === "MEDIUM-HIGH") {
+          priorityBadge.className = "badge badge-warning";
+        } else {
+          priorityBadge.className = "badge badge-success";
+        }
+      }
+      
+      if (raw.concern_level) {
+        const concernDiv = document.getElementById("business-summary");
+        concernDiv.innerHTML += `<div style="margin-top:12px; padding-top:8px; border-top:1px solid #e5e7eb; font-size:12px;"><i class="fas fa-exclamation-triangle"></i> Concern Level: ${escapeHtml2(raw.concern_level)}</div>`;
+      }
+    }
+  }
+
+  function getSeverity(a) {
+    const val = Math.abs(a.total_sales || a.sales_value || 0);
+    if (val > 5000) return "high";
+    if (val > 1000) return "medium";
+    return "low";
+  }
+
+  function renderChart(data) {
+    if (!data.length) return;
+    const dates = data.map(function(a) { return a.date || a.anomaly_date || ""; });
+    const vals = data.map(function(a) { return Math.abs(a.total_sales || a.sales_value || 0); });
+    const colors = data.map(function(a) {
+      const s = getSeverity(a);
+      return s === "high" ? "#ef4444" : s === "medium" ? "#f59e0b" : "#10b981";
+    });
+    Plotly.newPlot("an-chart", [{
+      x: dates,
+      y: vals,
+      type: "bar",
+      marker: { color: colors },
+      text: data.map(function(a) { return a._method || ""; })
+    }], {
+      height: 260,
+      margin: { l: 50, r: 10, t: 10, b: 60 },
+      xaxis: { gridcolor: "#f5f5f5" },
+      yaxis: { gridcolor: "#f5f5f5", title: "Sales Value ($)" },
+      plot_bgcolor: "white",
+      paper_bgcolor: "white"
+    }, { responsive: true });
+  }
+
+  // render table with first 5 visible, plus view all if total > 5
+  function renderTableWithPagination(fullData) {
+    const severityFilter = document.getElementById("an-severity").value;
+    let filtered = severityFilter ? fullData.filter(function(a) { return getSeverity(a) === severityFilter; }) : [...fullData];
+    const totalFiltered = filtered.length;
+    const showAll = currentDisplayAll;
+    const rowsToShow = showAll ? filtered.length : Math.min(5, filtered.length);
+
+    const tb = document.getElementById("an-table-body");
+    tb.innerHTML = "";
+    if (!filtered.length) {
+      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:30px">No anomalies found</td></tr>';
+      document.getElementById("view-all-container").style.display = "none";
+      return;
+    }
+
+    for (let i = 0; i < rowsToShow; i++) {
+      const a = filtered[i];
+      const sev = getSeverity(a);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${a.date || a.anomaly_date || "N/A"}</td>
+        <td><span class='badge badge-info'>${(a._method || "N/A").toUpperCase()}</span></td>
+        <td>${a.product_category || "All"}</td>
+        <td>${a.region || "All"}</td>
+        <td>$${fmt(a.total_sales || a.sales_value || 0)}</td>
+        <td>${a.zscore ? Math.abs(a.zscore).toFixed(2) + "σ" : "-"}</td>
+        <td><span class='badge ${sev === "high" ? "badge-danger" : sev === "medium" ? "badge-warning" : "badge-success"}'>${sev}</span></td>
+      `;
+      tb.appendChild(tr);
+    }
+
+    const container = document.getElementById("view-all-container");
+    if (totalFiltered > 5) {
+      container.style.display = "block";
+      const buttonText = currentDisplayAll ? "Show less (first 5)" : `View all (${totalFiltered} anomalies)`;
+      container.innerHTML = `<button class="btn btn-sm btn-outline" onclick="toggleViewAll()"><i class="fas fa-${currentDisplayAll ? 'chevron-up' : 'chevron-down'}"></i> ${buttonText}</button>`;
+    } else {
+      container.style.display = "none";
+    }
+  }
+
+  // toggle between showing all anomalies or just first 5
+  window.toggleViewAll = function() {
+    currentDisplayAll = !currentDisplayAll;
+    const severity = document.getElementById("an-severity").value;
+    let filtered = severity ? allAnomalies.filter(function(a) { return getSeverity(a) === severity; }) : [...allAnomalies];
+    if (!currentDisplayAll && filtered.length > 5) {
+      // show only first 5 rows
+      renderTableWithPagination(allAnomalies); // rerender with currentDisplayAll flag
+    } else {
+      renderTableWithPagination(allAnomalies);
+    }
+  };
+
+  function filterTable() {
+    currentDisplayAll = false;  // reset view all when filter changes
+    renderTableWithPagination(allAnomalies);
+  }
+
+  function exportAnomalies() {
+    if (!allAnomalies.length) return;
+    let csv = "Date,Method,Category,Region,Sales Value,Severity\n";
+    allAnomalies.forEach(function(a) {
+      csv += (a.date || a.anomaly_date || "") + "," +
+             (a._method || "") + "," +
+             (a.product_category || "") + "," +
+             (a.region || "") + "," +
+             (a.total_sales || a.sales_value || 0) + "," +
+             getSeverity(a) + "\n";
+    });
+    const link = document.createElement("a");
+    link.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+    link.download = "anomalies_" + new Date().toISOString().split("T")[0] + ".csv";
+    link.click();
+  }
+
+  function fmt(n) {
+    return Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function showMsg(type, msg) {
+    const el = document.getElementById("msg-" + type);
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = "block";
+    setTimeout(function() { el.style.display = "none"; }, 6000);
+  }
+
+  function escapeHtml2(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // attach global references
+  window.runDetection = runDetection;
+  window.toggleMethod = toggleMethod;
+  window.filterTable = filterTable;
+  window.exportAnomalies = exportAnomalies;
+  window.toggleViewAll = toggleViewAll;
+</script>
+</body>
+</html>
