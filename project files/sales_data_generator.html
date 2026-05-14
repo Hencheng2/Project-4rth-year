@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synthetic Data Generator — SalesForecast AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f2d45;
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --accent: #00e5ff;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(102,126,234,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(102,126,234,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb1 { width: 600px; height: 600px; background: rgba(102,126,234,.12); top: -200px; right: -200px; }
+  .orb2 { width: 400px; height: 400px; background: rgba(118,75,162,.1); bottom: -100px; left: -100px; }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 0 30px rgba(102,126,234,.4);
+  }
+  .header-text h1 {
+    font-size: 28px; font-weight: 800; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 30%, var(--primary));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header-text p { font-size: 13px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+
+  /* Main layout */
+  .layout { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-header-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .card-header h2 { font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text); }
+  .card-body { padding: 22px; }
+
+  /* Form controls */
+  .form-group { margin-bottom: 20px; }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-group label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .form-group label span { font-family: var(--mono); color: var(--accent); font-size: 13px; text-transform: none; letter-spacing: 0; }
+
+  input[type="number"], input[type="date"], select {
+    width: 100%; padding: 10px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: var(--mono);
+    font-size: 13px; transition: border-color .2s, box-shadow .2s;
+    appearance: none;
+  }
+  input[type="number"]:focus, input[type="date"]:focus, select:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102,126,234,.15);
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
+
+  /* Range slider */
+  input[type="range"] {
+    -webkit-appearance: none; width: 100%; height: 4px;
+    background: var(--border); border-radius: 2px; outline: none; cursor: pointer;
+    padding: 0; border: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px;
+    border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary));
+    box-shadow: 0 0 8px rgba(102,126,234,.5); cursor: pointer;
+  }
+
+  /* Toggle row */
+  .toggle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .toggle-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; transition: all .2s; user-select: none;
+  }
+  .toggle-item:hover { border-color: var(--primary); }
+  .toggle-item.active { border-color: var(--primary); background: rgba(102,126,234,.08); }
+  .toggle-item span { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .toggle-item.active span { color: var(--primary); }
+  .toggle-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); flex-shrink: 0;
+    transition: background .2s;
+  }
+  .toggle-item.active .toggle-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+  /* Count input with presets */
+  .count-presets { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .preset-btn {
+    padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); font-size: 11px;
+    font-family: var(--mono); cursor: pointer; transition: all .2s;
+  }
+  .preset-btn:hover, .preset-btn.active {
+    border-color: var(--primary); color: var(--primary);
+    background: rgba(102,126,234,.1);
+  }
+
+  /* Date range row */
+  .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Generate button */
+  .btn-generate {
+    width: 100%; padding: 14px; margin-top: 24px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none; border-radius: 12px; color: #fff;
+    font-family: var(--sans); font-size: 15px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.5px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: all .25s; position: relative; overflow: hidden;
+  }
+  .btn-generate::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.1), transparent);
+    opacity: 0; transition: opacity .2s;
+  }
+  .btn-generate:hover::before { opacity: 1; }
+  .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,.4); }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* Right panel */
+  .right-panel { display: flex; flex-direction: column; gap: 20px; }
+
+  /* Stats row */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 600px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+  .stat-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 600; }
+  .stat-value { font-size: 22px; font-weight: 800; font-family: var(--mono); color: var(--accent); }
+  .stat-sub { font-size: 11px; color: var(--muted); }
+
+  /* Preview table */
+  .preview-wrap { overflow-x: auto; }
+  .preview-table {
+    width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11.5px;
+  }
+  .preview-table th {
+    background: var(--surface2); padding: 10px 12px; text-align: left;
+    color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+    font-weight: 600; white-space: nowrap; border-bottom: 1px solid var(--border);
+  }
+  .preview-table td {
+    padding: 9px 12px; border-bottom: 1px solid rgba(31,45,69,.6);
+    color: var(--text); white-space: nowrap;
+  }
+  .preview-table tr:hover td { background: rgba(102,126,234,.04); }
+  .preview-table td.promo-yes { color: var(--success); }
+  .preview-table td.promo-no { color: var(--muted); }
+
+  /* Progress bar */
+  .progress-wrap { margin-top: 16px; display: none; }
+  .progress-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .progress-bar-bg { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
+  .progress-bar-fill {
+    height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 4px; transition: width .1s;
+    box-shadow: 0 0 8px rgba(0,229,255,.4);
+    width: 0%;
+  }
+
+  /* Download button */
+  .btn-download {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; padding: 13px; border-radius: 12px;
+    background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3);
+    color: var(--success); font-family: var(--sans); font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all .2s; text-decoration: none;
+    display: none;
+  }
+  .btn-download:hover { background: rgba(16,185,129,.18); transform: translateY(-1px); }
+
+  /* Category pills in config */
+  .cat-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cat-pill {
+    padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);
+    font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer;
+    transition: all .2s; background: var(--surface2);
+  }
+  .cat-pill:hover { border-color: var(--primary); color: var(--primary); }
+  .cat-pill.selected { border-color: var(--primary); background: rgba(102,126,234,.12); color: var(--primary); }
+
+  /* Log terminal */
+  .log-box {
+    background: #070b14; border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; font-family: var(--mono); font-size: 11px; color: #4ade80;
+    height: 110px; overflow-y: auto; display: none;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .log-box .log-line { margin-bottom: 3px; opacity: 0; animation: fadeIn .3s forwards; }
+  @keyframes fadeIn { to { opacity: 1; } }
+  .log-line.info { color: #60a5fa; }
+  .log-line.warn { color: var(--warning); }
+  .log-line.ok { color: #4ade80; }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--muted);
+    border: 2px dashed var(--border); border-radius: 12px;
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+  .empty-state p { font-size: 13px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+  .tag-primary { background: rgba(102,126,234,.15); color: var(--primary); }
+  .tag-success { background: rgba(16,185,129,.15); color: var(--success); }
+  .tag-warning { background: rgba(245,158,11,.15); color: var(--warning); }
+  .tag-danger  { background: rgba(239,68,68,.15);  color: var(--danger);  }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="glow-orb orb1"></div>
+<div class="glow-orb orb2"></div>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-icon">⚡</div>
+    <div class="header-text">
+      <h1>Synthetic Data Generator</h1>
+      <p>SalesForecast AI · CSV export ready for upload</p>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT: Controls -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <!-- Volume -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(102,126,234,.15)">📊</div>
+          <h2>Volume & Dates</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>Records to generate <span id="record-display">500</span></label>
+            <input type="range" id="record-slider" min="50" max="5000" step="50" value="500" oninput="syncCount(this.value)">
+            <div class="count-presets" style="margin-top:10px">
+              <button class="preset-btn" onclick="setCount(100)">100</button>
+              <button class="preset-btn" onclick="setCount(500)">500</button>
+              <button class="preset-btn active" onclick="setCount(1000)">1 000</button>
+              <button class="preset-btn" onclick="setCount(2000)">2 000</button>
+              <button class="preset-btn" onclick="setCount(5000)">5 000</button>
+            </div>
+          </div>
+          <div class="date-row">
+            <div class="form-group">
+              <label>Start date</label>
+              <input type="date" id="start-date" value="2023-01-01">
+            </div>
+            <div class="form-group">
+              <label>End date</label>
+              <input type="date" id="end-date" value="2024-12-31">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(118,75,162,.15)">🏷️</div>
+          <h2>Categories</h2>
+        </div>
+        <div class="card-body">
+          <div class="section-label">Select which categories to include</div>
+          <div class="cat-grid" id="cat-grid"></div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="preset-btn" onclick="selectAllCats(true)">All</button>
+            <button class="preset-btn" onclick="selectAllCats(false)">None</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regions -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(16,185,129,.15)">🗺️</div>
+          <h2>Regions</h2>
+        </div>
+        <div class="card-body">
+          <div class="section-label">Select which regions to include</div>
+          <div class="cat-grid" id="reg-grid"></div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="preset-btn" onclick="selectAllRegs(true)">All</button>
+            <button class="preset-btn" onclick="selectAllRegs(false)">None</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Behaviour sliders -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(245,158,11,.15)">🎛️</div>
+          <h2>Behaviour</h2>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>Promotion rate <span id="promo-display">20%</span></label>
+            <input type="range" id="promo-rate" min="0" max="80" value="20" oninput="document.getElementById('promo-display').textContent=this.value+'%'">
+          </div>
+          <div class="form-group">
+            <label>Holiday rate <span id="holiday-display">10%</span></label>
+            <input type="range" id="holiday-rate" min="0" max="50" value="10" oninput="document.getElementById('holiday-display').textContent=this.value+'%'">
+          </div>
+          <div class="form-group">
+            <label>Price volatility <span id="vol-display">Medium</span></label>
+            <input type="range" id="price-vol" min="1" max="3" step="1" value="2" oninput="updateVolLabel(this.value)">
+          </div>
+          <div class="divider"></div>
+          <div class="section-label">Seasonal uplift on weekends</div>
+          <div class="toggle-grid">
+            <div class="toggle-item active" id="toggle-weekend" onclick="toggleItem(this)">
+              <span>Weekend boost</span><div class="toggle-dot"></div>
+            </div>
+            <div class="toggle-item active" id="toggle-trend" onclick="toggleItem(this)">
+              <span>Growth trend</span><div class="toggle-dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generate -->
+      <button class="btn-generate" id="btn-gen" onclick="generate()">
+        <span>⚡</span> Generate CSV
+      </button>
+
+    </div>
+
+    <!-- RIGHT: Output -->
+    <div class="right-panel">
+
+      <!-- Stats -->
+      <div class="stats-row" id="stats-row">
+        <div class="stat-box"><div class="stat-label">Records</div><div class="stat-value" id="stat-records">—</div><div class="stat-sub">rows generated</div></div>
+        <div class="stat-box"><div class="stat-label">Total Sales</div><div class="stat-value" id="stat-sales">—</div><div class="stat-sub">USD</div></div>
+        <div class="stat-box"><div class="stat-label">Categories</div><div class="stat-value" id="stat-cats">—</div><div class="stat-sub">distinct</div></div>
+        <div class="stat-box"><div class="stat-label">Date span</div><div class="stat-value" id="stat-days">—</div><div class="stat-sub">days</div></div>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-label"><span id="progress-label-text">Generating…</span><span id="progress-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+      </div>
+
+      <!-- Log -->
+      <div class="log-box" id="log-box"></div>
+
+      <!-- Download -->
+      <button class="btn-download" id="btn-download">
+        ⬇ Download CSV file
+      </button>
+
+      <!-- Preview table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(0,229,255,.1)">👁️</div>
+          <h2>Preview <span style="font-size:11px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0">(first 20 rows)</span></h2>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div id="preview-area">
+            <div class="empty-state" style="margin:20px">
+              <div class="icon">📄</div>
+              <p>Configure your settings and click <strong>Generate CSV</strong> to see a preview here.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA DEFINITIONS ──────────────────────────────────────────────────────
+const CATEGORIES = [
+  { name: "Grocery (Dry & Canned Goods)",     minP: 1.50,  maxP: 15.00,  minU: 10, maxU: 200 },
+  { name: "Produce (Fruits & Vegetables)",     minP: 0.50,  maxP: 8.00,   minU: 20, maxU: 300 },
+  { name: "Dairy & Eggs",                      minP: 1.00,  maxP: 12.00,  minU: 15, maxU: 180 },
+  { name: "Meat & Seafood",                    minP: 5.00,  maxP: 45.00,  minU: 5,  maxU: 80  },
+  { name: "Frozen Foods",                      minP: 2.00,  maxP: 18.00,  minU: 10, maxU: 150 },
+  { name: "Bakery",                            minP: 1.00,  maxP: 12.00,  minU: 20, maxU: 250 },
+  { name: "Beverages",                         minP: 0.80,  maxP: 20.00,  minU: 30, maxU: 400 },
+  { name: "Deli & Prepared Foods",             minP: 3.00,  maxP: 25.00,  minU: 8,  maxU: 120 },
+  { name: "Household & Cleaning",              minP: 1.50,  maxP: 30.00,  minU: 5,  maxU: 100 },
+  { name: "Health, Beauty & Personal Care",    minP: 2.00,  maxP: 50.00,  minU: 5,  maxU: 90  },
+  { name: "General Merchandise / Non-Food",    minP: 2.00,  maxP: 60.00,  minU: 3,  maxU: 80  },
+  { name: "Specialty & Wellness",              minP: 3.00,  maxP: 40.00,  minU: 3,  maxU: 60  },
+  { name: "Floral",                            minP: 5.00,  maxP: 80.00,  minU: 2,  maxU: 50  },
+  { name: "Others",                            minP: 1.00,  maxP: 25.00,  minU: 5,  maxU: 100 },
+];
+
+const REGIONS = ["North","South","East","West","Central","Northeast","Northwest","Southeast","Southwest"];
+
+// ─── INIT UI ───────────────────────────────────────────────────────────────
+function buildPills(items, containerId, selectedSet) {
+  const grid = document.getElementById(containerId);
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const name = typeof item === 'string' ? item : item.name;
+    const pill = document.createElement('div');
+    pill.className = 'cat-pill selected';
+    pill.textContent = name;
+    pill.dataset.value = name;
+    selectedSet.add(name);
+    pill.addEventListener('click', () => {
+      if (selectedSet.has(name)) { selectedSet.delete(name); pill.classList.remove('selected'); }
+      else { selectedSet.add(name); pill.classList.add('selected'); }
+    });
+    grid.appendChild(pill);
+  });
+}
+
+const selectedCats = new Set();
+const selectedRegs = new Set();
+
+buildPills(CATEGORIES, 'cat-grid', selectedCats);
+buildPills(REGIONS,    'reg-grid', selectedRegs);
+
+function selectAllCats(v) {
+  document.querySelectorAll('#cat-grid .cat-pill').forEach(p => {
+    if (v) { selectedCats.add(p.dataset.value); p.classList.add('selected'); }
+    else   { selectedCats.delete(p.dataset.value); p.classList.remove('selected'); }
+  });
+}
+function selectAllRegs(v) {
+  document.querySelectorAll('#reg-grid .cat-pill').forEach(p => {
+    if (v) { selectedRegs.add(p.dataset.value); p.classList.add('selected'); }
+    else   { selectedRegs.delete(p.dataset.value); p.classList.remove('selected'); }
+  });
+}
+
+// ─── CONTROL HELPERS ──────────────────────────────────────────────────────
+function syncCount(val) {
+  document.getElementById('record-display').textContent = Number(val).toLocaleString();
+  document.getElementById('record-slider').value = val;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+}
+function setCount(n) {
+  syncCount(n);
+  document.getElementById('record-slider').value = n;
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent.replace(/\s/g,'')) === n);
+  });
+}
+function updateVolLabel(v) {
+  document.getElementById('vol-display').textContent = ['','Low','Medium','High'][v];
+}
+function toggleItem(el) { el.classList.toggle('active'); }
+
+// ─── RANDOM HELPERS ───────────────────────────────────────────────────────
+const rand    = (a, b) => Math.random() * (b - a) + a;
+const randInt = (a, b) => Math.floor(rand(a, b + 1));
+const pick    = arr => arr[Math.floor(Math.random() * arr.length)];
+
+function randDate(start, end) {
+  const t = start.getTime() + Math.random() * (end.getTime() - start.getTime());
+  const d = new Date(t);
+  return d.toISOString().split('T')[0];
+}
+
+function pad2(n) { return String(n).padStart(2,'0'); }
+function fmtDate(d) { return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+
+// ─── LOGGING ──────────────────────────────────────────────────────────────
+let logBox;
+function log(msg, type='ok') {
+  if (!logBox) return;
+  const line = document.createElement('div');
+  line.className = `log-line ${type}`;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  logBox.appendChild(line);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+// ─── PROGRESS ─────────────────────────────────────────────────────────────
+function setProgress(pct, label) {
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = Math.round(pct) + '%';
+  if (label) document.getElementById('progress-label-text').textContent = label;
+}
+
+// ─── GENERATE ─────────────────────────────────────────────────────────────
+let csvBlob = null;
+
+async function generate() {
+  const cats = [...selectedCats];
+  const regs = [...selectedRegs];
+  if (!cats.length || !regs.length) {
+    alert('Select at least one category and one region.'); return;
+  }
+
+  const totalRecords = parseInt(document.getElementById('record-slider').value);
+  const startDate    = new Date(document.getElementById('start-date').value);
+  const endDate      = new Date(document.getElementById('end-date').value);
+  if (startDate >= endDate) { alert('Start date must be before end date.'); return; }
+
+  const promoRate    = parseInt(document.getElementById('promo-rate').value) / 100;
+  const holidayRate  = parseInt(document.getElementById('holiday-rate').value) / 100;
+  const volLevel     = parseInt(document.getElementById('price-vol').value);
+  const weekendBoost = document.getElementById('toggle-weekend').classList.contains('active');
+  const growthTrend  = document.getElementById('toggle-trend').classList.contains('active');
+
+  const volMultipliers = [1, 0.05, 0.20, 0.45]; // indexed 0-3
+  const volMult = volMultipliers[volLevel];
+
+  // UI setup
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true; btn.innerHTML = '<span>⏳</span> Generating…';
+  logBox = document.getElementById('log-box');
+  logBox.innerHTML = '';
+  logBox.style.display = 'block';
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('btn-download').style.display = 'none';
+  setProgress(0, 'Initialising…');
+
+  log(`Generating ${totalRecords.toLocaleString()} records…`, 'info');
+  log(`Date range: ${fmtDate(startDate)} → ${fmtDate(endDate)}`, 'info');
+  log(`Categories: ${cats.length} | Regions: ${regs.length}`, 'info');
+
+  const totalDays = Math.round((endDate - startDate) / 86400000);
+  const rows = [];
+  const headers = ['date','product_category','region','units_sold','unit_price','total_sales','promotion_flag','holiday_flag','discount_percent','stock_level'];
+
+  const CHUNK = 200;
+  let totalSalesSum = 0;
+  const catSet = new Set();
+
+  // Build category lookup fast
+  const catMap = {};
+  CATEGORIES.forEach(c => { catMap[c.name] = c; });
+
+  for (let i = 0; i < totalRecords; i += CHUNK) {
+    const chunkEnd = Math.min(i + CHUNK, totalRecords);
+    for (let j = i; j < chunkEnd; j++) {
+      const catName = pick(cats);
+      const regName = pick(regs);
+      const catDef  = catMap[catName] || { minP:1, maxP:30, minU:5, maxU:100 };
+
+      // Random date, skewed for trend
+      let d;
+      if (growthTrend) {
+        // bias toward later dates (more recent = more sales)
+        const u = Math.random();
+        const t = startDate.getTime() + (u * u) * (endDate.getTime() - startDate.getTime());
+        d = new Date(t);
+      } else {
+        d = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
+      }
+      const dateStr  = fmtDate(d);
+      const dow      = d.getDay(); // 0=Sun,6=Sat
+      const isWeekend = dow === 0 || dow === 6;
+
+      // Price
+      let basePrice = rand(catDef.minP, catDef.maxP);
+      basePrice = basePrice * (1 + (Math.random() - 0.5) * volMult * 2);
+      basePrice = Math.max(catDef.minP * 0.5, basePrice);
+      const unitPrice = parseFloat(basePrice.toFixed(2));
+
+      // Units — weekend uplift
+      let baseUnits = randInt(catDef.minU, catDef.maxU);
+      if (weekendBoost && isWeekend) baseUnits = Math.round(baseUnits * rand(1.2, 1.6));
+
+      // Promotion / holiday
+      const isPromo   = Math.random() < promoRate ? 1 : 0;
+      const isHoliday = Math.random() < holidayRate ? 1 : 0;
+
+      // Discount: only on promo days
+      let discount = 0;
+      if (isPromo) {
+        discount = randInt(5, 30);
+        baseUnits = Math.round(baseUnits * (1 + discount / 200)); // slight lift
+      }
+      if (isHoliday) baseUnits = Math.round(baseUnits * rand(1.1, 1.4));
+
+      const units      = Math.max(1, baseUnits);
+      const totalSales = parseFloat((units * unitPrice * (1 - discount / 100)).toFixed(2));
+      const stock      = randInt(20, 500);
+
+      totalSalesSum += totalSales;
+      catSet.add(catName);
+
+      rows.push([dateStr, catName, regName, units, unitPrice, totalSales, isPromo, isHoliday, discount, stock]);
+    }
+
+    const pct = (chunkEnd / totalRecords) * 90;
+    setProgress(pct, `Building rows… ${chunkEnd.toLocaleString()} / ${totalRecords.toLocaleString()}`);
+    // Yield to browser
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  log(`Built ${rows.length.toLocaleString()} rows — assembling CSV…`, 'info');
+  setProgress(92, 'Assembling CSV…');
+  await new Promise(r => setTimeout(r, 0));
+
+  // Sort by date for clean output
+  rows.sort((a, b) => a[0].localeCompare(b[0]));
+
+  const csvLines = [headers.join(',')];
+  rows.forEach(r => csvLines.push(r.map(v => `"${v}"`).join(',')));
+  const csvText = csvLines.join('\n');
+
+  setProgress(98, 'Creating download…');
+  await new Promise(r => setTimeout(r, 0));
+
+  csvBlob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(csvBlob);
+
+  const dlBtn = document.getElementById('btn-download');
+  dlBtn.style.display = 'flex';
+  dlBtn.onclick = () => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `salesforecast_data_${totalRecords}rows_${fmtDate(new Date())}.csv`;
+    a.click();
+  };
+
+  // Stats
+  setProgress(100, 'Done!');
+  document.getElementById('stat-records').textContent = rows.length.toLocaleString();
+  document.getElementById('stat-sales').textContent   = '$' + (totalSalesSum / 1000).toFixed(0) + 'k';
+  document.getElementById('stat-cats').textContent    = catSet.size;
+  document.getElementById('stat-days').textContent    = totalDays;
+
+  log(`Done! Total sales: $${totalSalesSum.toLocaleString('en-US',{maximumFractionDigits:0})}`, 'ok');
+  log(`CSV ready — ${(csvText.length / 1024).toFixed(1)} KB`, 'ok');
+
+  // Preview
+  renderPreview(rows.slice(0, 20), headers);
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>⚡</span> Generate CSV';
+}
+
+// ─── PREVIEW TABLE ─────────────────────────────────────────────────────────
+function renderPreview(rows, headers) {
+  const shortHeaders = ['date','category','region','units','price','total','promo','holiday','disc%','stock'];
+  let html = '<div class="preview-wrap"><table class="preview-table"><thead><tr>';
+  shortHeaders.forEach(h => { html += `<th>${h}</th>`; });
+  html += '</tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr>';
+    r.forEach((v, i) => {
+      let cls = '';
+      // promo/holiday columns
+      if (i === 6 || i === 7) cls = v == 1 ? 'promo-yes' : 'promo-no';
+      // colour total_sales green-ish
+      const disp = (i === 4 || i === 5) ? '$' + Number(v).toFixed(2) : v;
+      html += `<td class="${cls}">${disp}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += `<p style="font-size:11px;color:var(--muted);padding:10px 16px">Showing first 20 of ${document.getElementById('stat-records').textContent} rows</p>`;
+  document.getElementById('preview-area').innerHTML = html;
+}
+
+// ─── DEFAULT DATE SETUP ───────────────────────────────────────────────────
+(function() {
+  const today = new Date();
+  const twoYearsAgo = new Date(today);
+  twoYearsAgo.setFullYear(today.getFullYear() - 2);
+  document.getElementById('end-date').value   = fmtDate(today);
+  document.getElementById('start-date').value = fmtDate(twoYearsAgo);
+  // default slider display
+  document.getElementById('record-display').textContent = '500';
+})();
+</script>
+</body>
+</html>
